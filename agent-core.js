@@ -161,9 +161,9 @@ async function analyzeReviews(lead) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"claude-sonnet-4-6", max_tokens:2500,
+        model:"claude-sonnet-4-6", max_tokens:3000,
         tools:[{type:"web_search_20250305", name:"web_search"}],
-        system:`Du er ein djup review-analytikar for RoadSpot. Søk på "${lead.company}" på TripAdvisor, Google Reviews, Viator, GetYourGuide og Reddit.
+        system:`Du er ein review-analytikar for RoadSpot. Søk etter FAKTISKE reviews og tilbakemeldingar frå gjester hos "${lead.company}". Søk på: "${lead.company} reviews", "${lead.company} TripAdvisor", "${lead.company} Google reviews". VIKTIG: Bruk BERRE sitatar frå ekte reviews du finn — ikkje lag opp sitatar. Om du ikkje finn noko, set topQuotes til []. Finn tal på reviews, score og konkrete gjesteutfordringar.
 
 Finn og analyser:
 1. SPRÅKPROBLEM: Gjester klagar på at guide berre snakkar eitt språk, eller at informasjon ikkje er på deira språk
@@ -363,6 +363,6 @@ window.RS = {
   buildHubSpotNote, buildCompanyProfile,
   getDemoLeads, isExcludedSegment,
   buildApolloPrompt,
-  version: "v9.0 — " + new Date().toISOString().split("T")[0]
+  version: "v9.1 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Agent Core loaded:", window.RS.version);

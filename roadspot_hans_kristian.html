@@ -548,8 +548,7 @@ async function runAgent() {
       })}
     );
     const d = await r.json();
-    const txt = d.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("
-") || "";
+    const txt = d.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("") || "";
     const m = txt.match(/\[[\s\S]*?\]/);
     if (m) { raw = JSON.parse(m[0]); logMsg(`Apollo: ${raw.length} selskap`); } else throw new Error();
   } catch(e) { logMsg("Apollo: demo-data","warn"); raw = RS.getDemoLeads(); }

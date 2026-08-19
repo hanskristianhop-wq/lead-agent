@@ -549,7 +549,7 @@ async function runAgent() {
     }
   } catch(e) {
     logMsg("Web-søk feila — brukar demo-data", "warn");
-    raw = RS.getDemoLeads();
+    raw = RS.getDemoLeads(cfg);
   }
   stepUI("apollo","done"); prog(14, raw.length + " selskap funne");
 
@@ -778,7 +778,7 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
         opType:lead.operationType||(review&&review.operationType)||lead.segment
       };
     },
-    getDemoLeads() { return [
+    getDemoLeads(cfg) { const all = [
       {company:"Tromsø Villmarkssenter",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Erik Johansen",title:"CEO",email:"erik@villmarkssenter.no",country:"Noreg",website:"villmarkssenter.no"},
       {company:"Best Arctic AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Hans Petter Lie",title:"Sales Director",email:"hans@bestarctic.no",country:"Noreg",website:"bestarctic.no"},
       {company:"Swedish Lapland Visitors",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Lars Nilsson",title:"Marketing Director",email:"lars@swedishlapland.com",country:"Sverige",website:"swedishlapland.com"},
@@ -804,8 +804,14 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
       {company:"Arctic Wilderness Norway",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Hilde Moe",title:"Head of Experience",email:"hmoe@arcticwilderness.no",country:"Noreg",website:"arcticwilderness.no"},
       {company:"Nordlys Explorer AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Knut Olsen",title:"Managing Director",email:"knut@nordlysexplorer.no",country:"Noreg",website:"nordlysexplorer.no"},
       {company:"Visit Tromsø AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Silje Andersen",title:"Marketing Director",email:"silje@visittromso.no",country:"Noreg",website:"visittromso.no"}
-    ]; },
-    version: "v9.2-bundled"
+    ];
+      if (!cfg || !cfg.geos || !cfg.geos.length) return all;
+      const GM={'noreg':['noreg','norge','norway'],'sverige':['sverige','sweden'],'danmark':['danmark','denmark'],'finland':['finland'],'island':['island','iceland'],'uk':['uk','united kingdom','england','scotland','britain'],'nederland':['nederland','netherlands'],'tyskland':['germany','deutschland','tyskland'],'frankrike':['france','frankrike'],'spania':['spain','spania'],'italia':['italy','italia']};
+      const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
+      const f=all.filter(c=>{const cc=(c.country||'').toLowerCase();return[...ok].some(a=>cc.includes(a));});
+      return f.length>0?f:all;
+    },
+    version: "v9.3-bundled"
   };
 }
 

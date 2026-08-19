@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="no"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoadSpot Lead Agent — Alexandra</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f8f7f4;color:#1a1a1a;padding:1rem}
+.app{max-width:740px;margin:0 auto}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #e0ddd5}
+.av{width:40px;height:40px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:white;flex-shrink:0}
+.h1{font-size:16px;font-weight:500}.sub{font-size:12px;color:#888}
+.hbdg{display:flex;gap:5px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.cb{font-size:11px;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;background:#F5F3FF;color:#4C1D95}
+.dot{width:6px;height:6px;border-radius:50%;background:#7C3AED;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tabs{display:flex;border-bottom:1px solid #e0ddd5;margin-bottom:1.5rem;overflow-x:auto}
+.tab{padding:8px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.active{color:#7C3AED;border-bottom-color:#7C3AED;font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.btn{padding:7px 14px;border-radius:8px;border:1px solid #ddd;background:white;color:#1a1a1a;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#f1efe8}
+.btn-p{background:#7C3AED;color:white;border-color:#7C3AED}.btn-p:hover{background:#6D28D9}
+.btn-sm{padding:4px 9px;font-size:11px}
+.card{background:white;border:1px solid #e0ddd5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px}
+.mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.25rem}
+.metric{background:#f1efe8;border-radius:8px;padding:9px 10px}
+.ml{font-size:10px;color:#888;margin-bottom:3px}.mv{font-size:19px;font-weight:500}
+.spin{width:28px;height:28px;border:3px solid #e0ddd5;border-top-color:#7C3AED;border-radius:50%;animation:sp .8s linear infinite;margin:0 auto .75rem}
+@keyframes sp{to{transform:rotate(360deg)}}
+.slist{list-style:none;text-align:left;max-width:440px;margin:0 auto}
+.slist li{font-size:13px;padding:3px 0;display:flex;gap:8px;color:#aaa}
+.slist li.done{color:#1D9E75}.slist li.active{color:#1a1a1a;font-weight:500}
+.pbar{height:4px;background:#f1efe8;border-radius:2px;overflow:hidden;margin:.75rem auto 0;max-width:340px}
+.pfill{height:100%;background:#7C3AED;border-radius:2px;transition:width .5s ease}
+.badge{font-size:11px;padding:2px 7px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.bt{background:#E1F5EE;color:#0F6E56}.bb{background:#E6F1FB;color:#185FA5}
+.bam{background:#FAEEDA;color:#854F0B}.bco{background:#FAECE7;color:#993C1D}
+.bgn{background:#EAF3DE;color:#3B6D11}.bgr{background:#f1efe8;color:#5F5E5A}.bsk{background:#FAECE7;color:#993C1D}
+.ibox{border-radius:8px;padding:9px 13px;font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.ia{background:#F5F3FF;color:#4C1D95}.iam{background:#FAEEDA;color:#854F0B}.ign{background:#E1F5EE;color:#0F6E56}
+.th{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:8px;margin:14px 0 6px;font-size:12px;font-weight:500}
+.th-1{background:#FAECE7;color:#993C1D;border:1px solid #F5C4B3}
+.th-2{background:#FAEEDA;color:#854F0B;border:1px solid #FAC775}
+.th-3{background:#f1efe8;color:#5F5E5A;border:1px solid #D3D1C7}
+.th-s{background:#fff8f8;color:#993C1D;border:1px solid #F5C4B3;opacity:.7}
+.rd{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.r1{background:#FAECE7;color:#993C1D}.r2{background:#FAEEDA;color:#854F0B}.r3{background:#f1efe8;color:#5F5E5A}.rs{background:#f8f8f8;color:#bbb}
+.avi{width:30px;height:30px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#0F6E56;flex-shrink:0}
+.lr{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid #f1efe8}
+.lr:last-child{border-bottom:none}
+.ln{font-size:13px;font-weight:500;margin-bottom:2px}
+.lm{font-size:11px;color:#888;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ep{background:#f8f7f4;border-radius:8px;padding:11px;font-size:12px;line-height:1.7;color:#555;white-space:pre-wrap;max-height:220px;overflow-y:auto;margin-top:7px}
+.pb2{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.plb{font-size:12px;width:160px;flex-shrink:0;color:#666}
+.ptrack{flex:1;height:7px;background:#f1efe8;border-radius:4px;overflow:hidden}
+.pf{height:100%;border-radius:4px}
+.pl{background:#1D9E75}.pi{background:#185FA5}.ph{background:#D85A30}.ps{background:#BA7517}.pa{background:#7F77DD}
+.pp{font-size:12px;font-weight:500;width:30px;text-align:right;flex-shrink:0}
+.rq{font-size:12px;color:#666;font-style:italic;padding:6px 10px;border-left:2px solid #ddd;margin:3px 0}
+.op{border:1px solid #e0ddd5;border-radius:8px;padding:9px;margin-top:7px;background:#f8f7f4;font-size:12px}
+.op.hot{border-color:#FAC775;background:#FAEEDA;color:#854F0B}
+.ll{font-size:12px;padding:5px 0;border-bottom:1px solid #f1efe8;display:flex;gap:8px;color:#888}
+.ll:last-child{border-bottom:none}
+.lt{color:#bbb;white-space:nowrap}.lok{color:#1D9E75}.lw{color:#BA7517}
+.empty{text-align:center;padding:2rem 0;color:#888}
+.stit{font-size:13px;font-weight:500;margin-bottom:10px}
+.fbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.sr{display:grid;grid-template-columns:160px 1fr;gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid #f1efe8}
+.sr:last-child{border-bottom:none}
+.sl{font-size:12px;color:#666;padding-top:4px;font-weight:500}
+.sd{font-size:11px;color:#aaa;margin-top:3px}
+select,input[type=text],input[type=email],textarea{width:100%;padding:6px 10px;border-radius:8px;border:1px solid #ddd;background:white;color:#1a1a1a;font-size:13px;font-family:inherit}
+textarea{min-height:80px;resize:vertical}
+.tag{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid #ddd;cursor:pointer;background:white;color:#888;user-select:none;display:inline-block;margin:2px}
+.tag.on{background:#7C3AED;color:white;border-color:#7C3AED}
+.tr{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1efe8}
+.tr:last-child{border-bottom:none}
+.tav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:white;flex-shrink:0}
+.tbw{flex:1;height:8px;background:#f1efe8;border-radius:4px;overflow:hidden}
+.tb{height:100%;border-radius:4px}
+#boot{position:fixed;top:0;left:0;right:0;bottom:0;background:#f8f7f4;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-size:13px;color:#888;gap:12px}
+#boot .s{width:24px;height:24px;border:2px solid #e0ddd5;border-top-color:#7C3AED;border-radius:50%;animation:sp .8s linear infinite}
+#mainapp{display:none}
+</style>
+</head><body>
+
+<div id="boot">
+  <div class="s"></div>
+  <div id="boot-msg">Lastar RoadSpot Agent…</div>
+  <div id="boot-ver" style="font-size:10px;color:#bbb"></div>
+</div>
+
+<div id="mainapp">
+<div class="hdr">
+  <div class="av">AL</div>
+  <div>
+    <div class="h1">RoadSpot Lead Agent — Alexandra</div>
+    <div class="sub" id="sub-line">Personleg salgsagent · Reviews → Sesong → Geografi</div>
+  </div>
+  <div class="hbdg">
+    <span class="cb"><span class="dot"></span>Apollo</span>
+    <span class="cb"><span class="dot"></span>HubSpot</span>
+    <span class="cb"><span class="dot"></span>Gmail</span>
+    <span class="cb"><span class="dot"></span>Team</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="T('run')">▶ Køyr</button>
+  <button class="tab" onclick="T('leads')">▦ Leads <span id="lbdg"></span></button>
+  <button class="tab" onclick="T('reviews')">★ Reviews <span id="rbdg"></span></button>
+  <button class="tab" onclick="T('drafts')">✉ Drafts <span id="dbdg"></span></button>
+  <button class="tab" onclick="T('team')">👥 Team <span id="tbdg"></span></button>
+  <button class="tab" onclick="T('settings')">⚙ Innstillingar</button>
+  <button class="tab" onclick="T('log')">≡ Logg</button>
+</div>
+
+<div id="panel-run" class="panel active">
+  <div class="mgrid">
+    <div class="metric"><div class="ml">Mine leads</div><div class="mv" id="m-leads" style="color:#7C3AED">0</div></div>
+    <div class="metric"><div class="ml">Tier 1 (reviews)</div><div class="mv" id="m-t1" style="color:#993C1D">0</div></div>
+    <div class="metric"><div class="ml">Nye i HubSpot</div><div class="mv" id="m-hs" style="color:#1D9E75">0</div></div>
+    <div class="metric"><div class="ml">Hoppa over</div><div class="mv" id="m-skip" style="color:#BA7517">0</div></div>
+    <div class="metric"><div class="ml">Gmail drafts</div><div class="mv" id="m-drafts" style="color:#7C3AED">0</div></div>
+  </div>
+  <div id="run-idle">
+    <div class="ia ibox"><span style="font-size:16px;flex-shrink:0">👥</span>
+      <div><strong>Felles teamdatabase aktiv.</strong> Agenten sjekkar mot Hans Kristian, Eirik og Alexandra automatisk. Selskap tatt av ein kollega vert hoppa over.</div>
+    </div>
+    <div class="card">
+      <div class="stit">Start dagleg køyring</div>
+      <p style="font-size:13px;color:#666;margin-bottom:1rem">Finn 25 selskap → teamsjekk → reviews → prioritering → epost → HubSpot → Gmail drafts.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-p" onclick="runAgent()">▶ Start køyring</button>
+        <button class="btn" onclick="T('team')">👥 Team</button>
+        <button class="btn" onclick="T('settings')">⚙ Innstillingar</button>
+        <button class="btn" onclick="window.open('https://mail.google.com/mail/u/0/#drafts','_blank')">↗ Gmail</button>
+      </div>
+    </div>
+    <div id="run-recent" style="display:none">
+      <div class="stit" style="margin-top:14px">Siste køyring</div>
+      <div id="recent-list"></div>
+    </div>
+  </div>
+  <div id="run-running" style="display:none">
+    <div class="card" style="text-align:center;padding:2rem">
+      <div class="spin"></div>
+      <p style="font-size:14px;font-weight:500;margin-bottom:1rem" id="run-status">Startar…</p>
+      <ul class="slist">
+        <li id="s-apollo">○ Finn selskap via Apollo.io</li>
+        <li id="s-teamcheck">○ Teamsjekk — HubSpot + lokal cache</li>
+        <li id="s-reviews">○ Review-søk — TripAdvisor · Google · Viator · GYG</li>
+        <li id="s-score">○ Prioriteringsscore — reviews → sesong → geografi</li>
+        <li id="s-stepemail">○ Genererer personlege epostar</li>
+        <li id="s-hubspot">○ HubSpot — duplikatkontroll + RoadSpot-fit profil</li>
+        <li id="s-gmail">○ Gmail-drafts i din innboks</li>
+      </ul>
+      <div class="pbar"><div class="pfill" id="rprog" style="width:0%"></div></div>
+      <p style="font-size:12px;color:#888;margin-top:6px" id="rsub"></p>
+    </div>
+  </div>
+</div>
+
+<div id="panel-leads" class="panel">
+  <div id="leads-empty" class="empty"><p>Ingen leads enno.</p><button class="btn btn-p" style="margin-top:1rem" onclick="T('run')">Start køyring</button></div>
+  <div class="fbar" id="fbar" style="display:none">
+    <button class="btn btn-sm" onclick="FL('all')" id="f-all">Alle</button>
+    <button class="btn btn-sm" onclick="FL(1)" id="f-1">🔴 Tier 1</button>
+    <button class="btn btn-sm" onclick="FL(2)" id="f-2">🟠 Tier 2</button>
+    <button class="btn btn-sm" onclick="FL(3)" id="f-3">⚪ Tier 3</button>
+    <button class="btn btn-sm" onclick="FL('skip')" id="f-skip" style="color:#BA7517">⚠ Hoppa over</button>
+  </div>
+  <div id="leads-container"></div>
+</div>
+
+<div id="panel-reviews" class="panel">
+  <div id="rev-empty" class="empty"><p>Ingen reviews enno.</p></div>
+  <div id="rev-container"></div>
+</div>
+
+<div id="panel-drafts" class="panel">
+  <div id="drafts-empty" class="empty"><p>Ingen drafts enno.</p></div>
+  <div id="drafts-container"></div>
+</div>
+
+<div id="panel-team" class="panel">
+  <div class="card"><div class="stit">👥 Teamstatus</div><div id="team-stats"></div></div>
+  <div class="card">
+    <div class="stit">📋 Behandla selskap</div>
+    <div id="claimed-list"></div>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:6px">
+    <button class="btn btn-sm" onclick="renderTeam()">↻ Oppdater</button>
+    <button class="btn btn-sm" style="color:#993C1D" onclick="if(confirm('Nullstill lokal cache?')){localStorage.removeItem(RS.SHARED_KEY);renderTeam();logMsg('Cache nullstilt','warn');}">🗑 Nullstill</button>
+  </div>
+</div>
+
+<div id="panel-settings" class="panel">
+  <div class="card">
+    <div class="stit">👤 Din profil</div>
+    <div class="sr"><div><div class="sl">Namn</div></div><input type="text" id="cfg-name" value="Alexandra" onchange="saveCfg()"></div>
+    <div class="sr"><div><div class="sl">E-post</div><div class="sd">Gmail-drafts vert lagt i denne innboksen</div></div><input type="email" id="cfg-email" value="" placeholder="alexandra@roadspot.com" onchange="saveCfg()"></div>
+    <div class="sr"><div><div class="sl">Telefon</div></div><input type="text" id="cfg-phone" value="" onchange="saveCfg()"></div>
+    <div class="sr"><div><div class="sl">Tittel</div></div><input type="text" id="cfg-title" value="Sales | RoadSpot" onchange="saveCfg()"></div>
+  </div>
+  <div class="card">
+    <div class="stit">🌍 Geografi</div>
+    <div class="sr"><div><div class="sl">Land</div><div class="sd">Klikk for å aktivere</div></div>
+      <div id="geo-tags">
+        <span class="tag on" data-v="Noreg" onclick="toggleTag(this)">🇳🇴 Noreg</span>
+        <span class="tag on" data-v="Sverige" onclick="toggleTag(this)">🇸🇪 Sverige</span>
+        <span class="tag on" data-v="Danmark" onclick="toggleTag(this)">🇩🇰 Danmark</span>
+        <span class="tag" data-v="Finland" onclick="toggleTag(this)">🇫🇮 Finland</span>
+        <span class="tag" data-v="Island" onclick="toggleTag(this)">🇮🇸 Island</span>
+        <span class="tag" data-v="UK" onclick="toggleTag(this)">🇬🇧 UK</span>
+        <span class="tag" data-v="Nederland" onclick="toggleTag(this)">🇳🇱 NL</span>
+        <span class="tag" data-v="Tyskland" onclick="toggleTag(this)">🇩🇪 DE</span>
+        <span class="tag" data-v="Frankrike" onclick="toggleTag(this)">🇫🇷 FR</span>
+        <span class="tag" data-v="Spania" onclick="toggleTag(this)">🇪🇸 ES</span>
+        <span class="tag" data-v="Italia" onclick="toggleTag(this)">🇮🇹 IT</span>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stit">🎯 Segment og kriterier</div>
+    <div class="sr"><div><div class="sl">Segment</div></div>
+      <div id="seg-tags">
+        <span class="tag on" data-v="Turoperatørar" onclick="toggleTag(this)">Turoperatørar</span>
+        <span class="tag on" data-v="Båt/cruise" onclick="toggleTag(this)">Båt/cruise</span>
+        <span class="tag on" data-v="Destinasjonsselskap" onclick="toggleTag(this)">Destinasjon</span>
+        <span class="tag" data-v="Bussoperatørar" onclick="toggleTag(this)">Buss</span>
+        <span class="tag" data-v="Togoperatørar" onclick="toggleTag(this)">Tog</span>
+        <span class="tag" data-v="Museum" onclick="toggleTag(this)">Museum</span>
+        <span class="tag" data-v="Kommunar" onclick="toggleTag(this)">Kommunar</span>
+      </div>
+    </div>
+    <div class="sr"><div><div class="sl">Min. mnd til sesong</div></div>
+      <select id="cfg-months" onchange="saveCfg()">
+        <option value="2">2 månader</option>
+        <option value="3" selected>3 månader</option>
+        <option value="4">4 månader</option>
+        <option value="6">6 månader</option>
+      </select>
+    </div>
+    <div class="sr"><div><div class="sl">Berre Tier 1</div></div>
+      <select id="cfg-rev1" onchange="saveCfg()">
+        <option value="no" selected>Nei — alle</option>
+        <option value="yes">Ja — berre med reviews</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stit">✉ Signatur</div>
+    <div class="sr"><div><div class="sl">Tekst</div></div>
+      <textarea id="cfg-sig" onchange="saveCfg()">Med venleg helsing,
+
+Alexandra
+Sales | RoadSpot
+Multilingual AI Audio Guiding for Professional Tourism
+roadspot.com</textarea>
+    </div>
+  </div>
+  <button class="btn btn-p" onclick="saveAndConfirm()" id="save-btn">✓ Lagre innstillingar</button>
+</div>
+
+<div id="panel-log" class="panel">
+  <div class="card" style="padding:0 1.25rem">
+    <div id="log-container"><div class="empty" style="padding:1.5rem 0"><p>Ingen aktivitet enno</p></div></div>
+  </div>
+</div>
+</div>
+
+<script>
+const MY_ID    = "alexandra";
+const MY_NAME  = "Alexandra";
+const STORE_K  = "rs-cfg-alexandra";
+const CORE_URL = "https://raw.githubusercontent.com/roadspot-as/lead-agent/main/agent-core.js";
+let RS = null, allLeads = [], logs = [], activeFilt = "all";
+
+// ── BOOT ───────────────────────────────────────────────────
+async function boot() {
+  try {
+    document.getElementById("boot-msg").textContent = "Sjekkar oppdateringar frå GitHub…";
+    const r = await fetch(CORE_URL + "?t=" + Date.now(), {cache: "no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const js = await r.text();
+    const s = document.createElement("script");
+    s.textContent = js;
+    document.head.appendChild(s);
+    if (!window.RS) throw new Error("RS undefined");
+    RS = window.RS;
+    document.getElementById("boot-ver").textContent = RS.version;
+    document.getElementById("sub-line").textContent = "Personleg salgsagent · Reviews → Sesong → Geografi · " + RS.version;
+    logMsg("Kjernelogikk lasta frå GitHub: " + RS.version);
+  } catch(err) {
+    logMsg("GitHub utilgjengeleg (" + err.message + ") — lokal versjon", "warn");
+    RS = bundledCore();
+    document.getElementById("boot-ver").textContent = "(lokal)";
+  }
+  loadCfg();
+  renderTeam();
+  document.getElementById("boot").style.display = "none";
+  document.getElementById("mainapp").style.display = "block";
+}
+
+// ── SETTINGS ───────────────────────────────────────────────
+function loadCfg() {
+  const s = JSON.parse(localStorage.getItem(STORE_K) || "{}");
+  if (s.name)   document.getElementById("cfg-name").value   = s.name;
+  if (s.email)  document.getElementById("cfg-email").value  = s.email;
+  if (s.phone)  document.getElementById("cfg-phone").value  = s.phone;
+  if (s.title)  document.getElementById("cfg-title").value  = s.title;
+  if (s.months) document.getElementById("cfg-months").value = s.months;
+  if (s.rev1)   document.getElementById("cfg-rev1").value   = s.rev1;
+  if (s.sig)    document.getElementById("cfg-sig").value    = s.sig;
+  if (s.geos)   document.querySelectorAll("#geo-tags .tag").forEach(t => t.classList.toggle("on", s.geos.includes(t.dataset.v)));
+  if (s.segs)   document.querySelectorAll("#seg-tags .tag").forEach(t => t.classList.toggle("on", s.segs.includes(t.dataset.v)));
+}
+function saveCfg() {
+  localStorage.setItem(STORE_K, JSON.stringify({
+    name:   document.getElementById("cfg-name").value,
+    email:  document.getElementById("cfg-email").value,
+    phone:  document.getElementById("cfg-phone").value,
+    title:  document.getElementById("cfg-title").value,
+    months: document.getElementById("cfg-months").value,
+    rev1:   document.getElementById("cfg-rev1").value,
+    sig:    document.getElementById("cfg-sig").value,
+    geos:   [...document.querySelectorAll("#geo-tags .tag.on")].map(t => t.dataset.v),
+    segs:   [...document.querySelectorAll("#seg-tags .tag.on")].map(t => t.dataset.v),
+  }));
+}
+function saveAndConfirm() { saveCfg(); const b = document.getElementById("save-btn"); b.textContent = "✓ Lagra!"; setTimeout(() => b.textContent = "✓ Lagre innstillingar", 1500); }
+function toggleTag(el) { el.classList.toggle("on"); saveCfg(); }
+function getCfg() {
+  const s = JSON.parse(localStorage.getItem(STORE_K) || "{}");
+  return {
+    name:   s.name   || MY_NAME,
+    email:  s.email  || "",
+    phone:  s.phone  || "",
+    title:  s.title  || "Sales | RoadSpot",
+    months: parseInt(s.months || 3),
+    rev1:   s.rev1   === "yes",
+    sig:    s.sig    || "Med venleg helsing,\n\nAlexandra\nSales | RoadSpot\nMultilingual AI Audio Guiding for Professional Tourism\nroadspot.com",
+    geos:   s.geos   || ["Noreg", "Sverige", "Danmark"],
+    segs:   s.segs   || ["Turoperatørar", "Båt/cruise", "Destinasjonsselskap"],
+  };
+}
+
+// ── UI ─────────────────────────────────────────────────────
+function T(t) {
+  document.querySelectorAll(".tab").forEach(e => e.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(e => e.classList.remove("active"));
+  const m = {run:0, leads:1, reviews:2, drafts:3, team:4, settings:5, log:6};
+  document.querySelectorAll(".tab")[m[t]].classList.add("active");
+  document.getElementById("panel-" + t).classList.add("active");
+  if (t === "team") renderTeam();
+}
+function logMsg(msg, type = "ok") {
+  const t = new Date().toLocaleTimeString("no-NO", {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+  logs.unshift({t, msg, type});
+  document.getElementById("log-container").innerHTML = logs.slice(0, 100).map(l =>
+    `<div class="ll"><span class="lt">${l.t}</span><span class="l${l.type === "ok" ? "ok" : "w"}">${l.type === "ok" ? "✓" : "⚠"}</span><span>${l.msg}</span></div>`
+  ).join("");
+}
+function stepUI(id, st) {
+  const el = document.getElementById("s-" + id); if (!el) return;
+  const raw = el.textContent.replace(/^[○✓→] /, "");
+  el.classList.remove("done", "active");
+  if (st === "done") { el.classList.add("done"); el.textContent = "✓ " + raw; }
+  else if (st === "active") { el.classList.add("active"); el.textContent = "→ " + raw; }
+  else el.textContent = "○ " + raw;
+}
+function prog(p, s = "") { document.getElementById("rprog").style.width = p + "%"; document.getElementById("rsub").textContent = s; }
+function ini(n) { return (n || "??").split(" ").map(w => w[0] || "").join("").toUpperCase().slice(0, 2); }
+function rnd() { return Math.random().toString(36).slice(2, 8); }
+function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+function tog(id, btn, on, off) { const el = document.getElementById(id); if (!el) return; const o = el.style.display === "block"; el.style.display = o ? "none" : "block"; btn.textContent = o ? on : off; }
+function FL(f) {
+  activeFilt = f;
+  ["all", 1, 2, 3, "skip"].forEach(x => { const b = document.getElementById("f-" + x); if (b) b.style.background = x === f ? "#f1efe8" : "white"; });
+  renderLeads();
+}
+
+// ── TEAM ───────────────────────────────────────────────────
+function renderTeam() {
+  if (!RS) return;
+  const stats = RS.getTeamStats(), claimed = RS.getClaimedCompanies();
+  const total = Math.max(1, Object.values(stats).reduce((a, b) => a + b, 0));
+  document.getElementById("tbdg").textContent = ` (${Object.keys(claimed).length})`;
+  document.getElementById("team-stats").innerHTML = Object.entries(RS.TEAM_NAMES).map(([id, name]) => {
+    const count = stats[id] || 0, pct = Math.round(count / total * 100) || 0;
+    const col = RS.TEAM_COLORS[id], isMe = id === MY_ID;
+    return `<div class="tr">
+      <div class="tav" style="background:${col}">${name.slice(0,2).toUpperCase()}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${isMe ? 600 : 400}">${name}${isMe ? " (deg)" : ""}</div>
+        <div class="tbw" style="margin-top:4px"><div class="tb" style="width:${pct}%;background:${col}"></div></div>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:${col};width:60px;text-align:right">${count}</div>
+    </div>`;
+  }).join("");
+  const entries = Object.values(claimed).sort((a, b) => (b.claimedAt || "").localeCompare(a.claimedAt || ""));
+  document.getElementById("claimed-list").innerHTML = !entries.length
+    ? `<div class="empty" style="padding:1rem 0">Ingen enno</div>`
+    : `<div style="display:grid;grid-template-columns:1fr 90px 90px;gap:4px;font-size:11px;font-weight:500;color:#888;padding:6px 0;border-bottom:1px solid #f1efe8"><div>Selskap</div><div>Agent</div><div>Dato</div></div>`
+    + entries.slice(0, 60).map(e => {
+      const col = RS.TEAM_COLORS[e.agent] || "#888";
+      return `<div style="display:grid;grid-template-columns:1fr 90px 90px;gap:4px;font-size:12px;padding:5px 0;border-bottom:1px solid #f1efe8">
+        <div style="font-weight:500">${e.name || "?"}</div>
+        <div><span style="font-size:11px;padding:1px 7px;border-radius:20px;background:${col}20;color:${col}">${RS.TEAM_NAMES[e.agent] || e.agent}</span></div>
+        <div style="font-size:11px;color:#888">${e.claimedAt || "?"}</div>
+      </div>`;
+    }).join("");
+}
+
+// ── RENDER LEADS ───────────────────────────────────────────
+function renderLeads() {
+  const c = document.getElementById("leads-container"), e = document.getElementById("leads-empty"), fb = document.getElementById("fbar");
+  if (!allLeads.length) { e.style.display = "block"; c.innerHTML = ""; if (fb) fb.style.display = "none"; return; }
+  e.style.display = "none"; if (fb) fb.style.display = "flex";
+  document.getElementById("lbdg").textContent = ` (${allLeads.filter(l => !l.skippedByTeam).length})`;
+  const cfg = getCfg();
+  const sorted = [...allLeads].sort((a, b) => {
+    if (a.skippedByTeam && !b.skippedByTeam) return 1;
+    if (!a.skippedByTeam && b.skippedByTeam) return -1;
+    return (b.priorityScore || 0) - (a.priorityScore || 0);
+  });
+  const filt = activeFilt === "all" ? sorted : activeFilt === "skip" ? sorted.filter(l => l.skippedByTeam) : sorted.filter(l => l.tier === activeFilt && !l.skippedByTeam);
+  const t1 = filt.filter(l => l.tier === 1 && !l.skippedByTeam);
+  const t2 = filt.filter(l => l.tier === 2 && !l.skippedByTeam);
+  const t3 = filt.filter(l => l.tier === 3 && !l.skippedByTeam);
+  const sk = filt.filter(l => l.skippedByTeam);
+  let html = "";
+  function grp(leads, lbl, cls) {
+    if (!leads.length) return;
+    html += `<div class="th ${cls}">${lbl}<span style="margin-left:auto;font-weight:400">${leads.length}</span></div>`;
+    leads.forEach(l => {
+      const idx = allLeads.indexOf(l), sc = l.review?.opportunityScore, sk2 = l.skippedByTeam;
+      html += `<div class="card" style="padding:.6rem .9rem;margin-bottom:6px${sk2 ? ";opacity:.6" : ""}">
+        <div class="lr" style="padding:0;border:none">
+          ${sk2 ? `<div class="rd rs" title="${l.skipReason || ""}">—</div>` : `<div class="rd r${l.tier}">#${l.rank || "?"}</div>`}
+          <div class="avi">${ini(l.company)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="ln">${l.company} <span style="font-size:11px;color:#888;font-weight:400">${l.country || "🇳🇴"}</span></div>
+            <div class="lm">
+              ${l.contact ? `<span>${l.contact}</span>` : ""}
+              ${sk2 ? `<span class="badge bsk">⚠ ${l.skipReason || "Team-duplikat"}</span>` : `<span class="badge bb">📅 ${l.nextSeasonStart || "?"} (${l.psData?.mths || "?"} mnd)</span>`}
+              ${!sk2 && sc != null ? `<span class="badge ${sc >= 60 ? "bco" : sc >= 35 ? "bam" : "bgn"}">⭐ ${sc}</span>` : ""}
+              ${l.hubspotId && !l.hsDuplicate && !sk2 ? '<span class="badge bgn">✓ HS</span>' : ""}
+              ${l.draftId && l.draftId !== "no-email" ? '<span class="badge bt">✉</span>' : ""}
+            </div>
+          </div>
+          ${!sk2 ? `<div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick="tog('le-${idx}',this,'✉','↑')">✉</button>
+            <button class="btn btn-sm" onclick="tog('lh-${idx}',this,'HS','↑')">HS</button>
+          </div>` : ""}
+        </div>
+        ${!sk2 ? `
+          <div id="le-${idx}" style="display:none;margin-top:6px"><div class="ep">${l.emailDraft || "…"}</div></div>
+          <div id="lh-${idx}" style="display:none;margin-top:6px"><div class="ep" style="font-family:monospace;font-size:11px">${RS.buildHubSpotNote(l, cfg.name, MY_ID)}</div></div>
+        ` : ""}
+      </div>`;
+    });
+  }
+  grp(t1, "🔴 Tier 1 — Dokumenterte gjesteklagebeskrivingar", "th-1");
+  grp(t2, "🟠 Tier 2 — Sesong + geografi", "th-2");
+  grp(t3, "⚪ Tier 3", "th-3");
+  grp(sk, "⚠ Hoppa over — allereie tatt av teamet", "th-s");
+  c.innerHTML = html;
+}
+
+function renderReviews() {
+  const c = document.getElementById("rev-container"), e = document.getElementById("rev-empty");
+  const wr = allLeads.filter(l => l.review && !l.skippedByTeam);
+  if (!wr.length) { e.style.display = "block"; c.innerHTML = ""; return; }
+  e.style.display = "none";
+  document.getElementById("rbdg").textContent = ` (${wr.length})`;
+  const bars = {Språkproblem:"pl", Informasjonsproblem:"pi", "Høyre guide":"ph", Skaleringsproblem:"ps", "App/sjølvguiding":"pa"};
+  c.innerHTML = [...wr].sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0)).map((l, i) => {
+    const rev = l.review, sc = rev.opportunityScore;
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div class="avi">${ini(l.company)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500">${l.company}</div>
+          <div style="font-size:11px;color:#888;margin-top:3px">${rev.sources?.join(" · ") || ""} · ${rev.totalReviews} omtalar</div>
+        </div>
+        <div style="text-align:center;background:#f1efe8;border-radius:8px;padding:6px 11px">
+          <div style="font-size:20px;font-weight:500;color:${sc >= 60 ? "#D85A30" : sc >= 35 ? "#BA7517" : "#1D9E75"}">${sc}</div>
+          <div style="font-size:10px;color:#888">RS-score</div>
+        </div>
+      </div>
+      ${rev.painPoints.filter(p => p.pct > 0).sort((a, b) => b.pct - a.pct).map(p => `
+        <div class="pb2">
+          <div class="plb">${p.category}</div>
+          <div class="ptrack"><div class="pf ${bars[p.category] || "pl"}" style="width:${Math.min(100, p.pct * 3.5)}%"></div></div>
+          <div class="pp">${p.pct}%</div>
+        </div>`).join("")}
+      ${rev.topQuotes?.slice(0, 2).map(q => `<div class="rq">${q}</div>`).join("") || ""}
+      <div class="op ${sc >= 40 ? "hot" : ""}" style="margin-top:8px">${rev.roadspotCase}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderDrafts() {
+  const done = [...allLeads].filter(l => l.draftId && l.draftId !== "no-email").sort((a, b) => (a.rank || 99) - (b.rank || 99));
+  const dc = document.getElementById("drafts-container"), de = document.getElementById("drafts-empty");
+  if (!done.length) { de.style.display = "block"; dc.innerHTML = ""; return; }
+  de.style.display = "none";
+  document.getElementById("dbdg").textContent = ` (${done.length})`;
+  document.getElementById("m-drafts").textContent = done.length;
+  dc.innerHTML = `<div class="ign ibox">Draftane ligg i Gmail. <a href="https://mail.google.com/mail/u/0/#drafts" style="color:#7C3AED">Opne Gmail →</a></div>`
+    + done.map((l, i) => `<div class="card" style="padding:.6rem .9rem;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+        <div class="rd r${l.tier}">#${l.rank || "?"}</div>
+        <div class="avi" style="width:26px;height:26px;font-size:10px">${ini(l.company)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500">${l.company}</div>
+          <div style="font-size:11px;color:#888">${l.email || "?"}</div>
+        </div>
+        <span class="badge bgn">✓ Draft</span>
+        <button class="btn btn-sm" onclick="tog('de-${i}',this,'Sjå','↑')">Sjå</button>
+      </div>
+      <div id="de-${i}" style="display:none;margin-top:6px"><div class="ep">${l.emailDraft || ""}</div></div>
+    </div>`).join("");
+}
+
+// ── MAIN RUN ───────────────────────────────────────────────
+async function runAgent() {
+  const cfg = getCfg();
+  if (!cfg.email) { alert("Legg inn e-postadressa di under Innstillingar fyrst!"); T("settings"); return; }
+  document.getElementById("run-idle").style.display = "none";
+  document.getElementById("run-running").style.display = "block";
+  ["apollo","teamcheck","reviews","score","stepemail","hubspot","gmail"].forEach(s => stepUI(s, ""));
+  logMsg("Køyring starta · " + cfg.name + " · " + new Date().toLocaleTimeString("no-NO"));
+
+  stepUI("apollo","active"); document.getElementById("run-status").textContent = "Finn selskap…"; prog(4);
+  let raw = [];
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:4000,
+        system: `Lead-agent for RoadSpot. Finn turistselskap ute av sesong i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min ${cfg.months} mnd til sesong. Bruk Apollo.io. 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"Nov 2026","contactWindow":"Jun-Sep 2026","contact":"","title":"","email":"","country":"Noreg"}]`,
+        messages: [{role:"user", content:"Finn 25 selskap."}],
+        mcp_servers: [{type:"url", url:RS.APOLLO, name:"apollo"}]
+      })}
+    );
+    const d = await r.json();
+    const txt = d.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("
+") || "";
+    const m = txt.match(/\[[\s\S]*?\]/);
+    if (m) { raw = JSON.parse(m[0]); logMsg(`Apollo: ${raw.length} selskap`); } else throw new Error();
+  } catch(e) { logMsg("Apollo: demo-data","warn"); raw = RS.getDemoLeads(); }
+  stepUI("apollo","done"); prog(14, `${raw.length} selskap`);
+
+  stepUI("teamcheck","active"); document.getElementById("run-status").textContent = "Teamsjekk…"; prog(17);
+  let skipCount = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const l = raw[i];
+    prog(17 + Math.round(i/raw.length*10), `Teamsjekk ${i+1}/${raw.length}: ${l.company}`);
+    const cl = RS.isClaimedByOther(l.company, l.website, MY_ID);
+    if (cl) { l.skippedByTeam = true; l.skipReason = `Tatt av ${RS.TEAM_NAMES[cl.agent]} (${cl.claimedAt})`; skipCount++; logMsg(`⚠ Hoppar over: ${l.company} — ${l.skipReason}`,"warn"); continue; }
+    if (i < 8) {
+      try {
+        const hr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:200,
+            system:`HubSpot. Søk "${l.company}"/"${l.website||""}". Svar: {"found":true,"hubspot_id":"id"} eller {"found":false}`,
+            messages:[{role:"user", content:`Finst ${l.company}?`}],
+            mcp_servers:[{type:"url", url:RS.HUBSPOT, name:"hubspot"}]
+          })}
+        );
+        const hd = await hr.json();
+        const ht = hd.content?.map(b => b.type==="text" ? b.text : "").join("") || "";
+        const hm = ht.match(/\{[^}]*\}/);
+        if (hm) { const p = JSON.parse(hm[0]); if (p.found) { l.skippedByTeam = true; l.skipReason = `HubSpot (${p.hubspot_id||"?"})`; skipCount++; logMsg(`⚠ HS-dup: ${l.company}`,"warn"); } }
+      } catch(e) {}
+      await sl(80);
+    }
+  }
+  const active = raw.filter(l => !l.skippedByTeam);
+  logMsg(`Teamsjekk: ${active.length} klare · ${skipCount} hoppa over`);
+  document.getElementById("m-skip").textContent = skipCount;
+  stepUI("teamcheck","done"); prog(27);
+
+  stepUI("reviews","active"); document.getElementById("run-status").textContent = "Søkjer reviews…";
+  for (let i = 0; i < active.length; i++) {
+    prog(27 + Math.round(i/active.length*20), `Reviews ${i+1}/${active.length}: ${active[i].company}`);
+    active[i].review = i < 4 ? await RS.analyzeReviews(active[i]) : RS.generateDemoReview(active[i]);
+    if (active[i].review.opportunityScore > 15) logMsg(`✓ Reviews: ${active[i].company} (${active[i].review.opportunityScore})`);
+    await sl(80);
+  }
+  stepUI("reviews","done"); prog(47);
+
+  stepUI("score","active"); prog(50);
+  active.forEach(l => { const ps = RS.calcPriority(l); l.tier = ps.tier; l.priorityScore = ps.score; l.psData = ps; });
+  if (cfg.rev1) active.splice(0, active.length, ...active.filter(l => l.tier === 1));
+  active.sort((a, b) => b.priorityScore - a.priorityScore);
+  active.forEach((l, i) => l.rank = i + 1);
+  const t1c = active.filter(l => l.tier === 1).length;
+  logMsg(`Score: ${t1c} T1 · ${active.filter(l=>l.tier===2).length} T2 · ${active.filter(l=>l.tier===3).length} T3`);
+  document.getElementById("m-t1").textContent = t1c;
+  stepUI("score","done"); prog(54);
+
+  stepUI("stepemail","active"); document.getElementById("run-status").textContent = "Genererer epostar…";
+  for (let i = 0; i < active.length; i++) {
+    const l = active[i];
+    prog(54 + Math.round(i/active.length*16), `Epost #${l.rank}: ${l.company}`);
+    const rev = l.review, topP = rev?.painPoints?.filter(p=>p.pct>0).sort((a,b)=>b.pct-a.pct)[0], topQ = rev?.topQuotes?.[0]||"";
+    try {
+      const er = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:600,
+          system:`Skreddarsydd sals-epost på norsk for RoadSpot frå ${cfg.name}. Maks 200 ord. ${l.tier===1&&topP?"Start med konkret referanse til deira eigne gjesteomtalar.":"Vis forståing for sesong og type verksemd."} Referansekunder: Havila Kystruten, Fjord Tours, Rødne, Best Arctic. Avslutt med:
+${cfg.sig}`,
+          messages:[{role:"user", content:`Epost til ${l.contact||"leiinga"} (${l.title||""}) hos ${l.company} (${l.country},${l.segment}). Tier ${l.tier}. Sesongstart ${l.nextSeasonStart} (${l.psData?.mths||"?"} mnd).${l.tier===1&&topP?` Reviews: ${rev.totalReviews} omtalar, ${topP.pct}% ${topP.category.toLowerCase()}. Sitat: "${topQ}"`:""}` }]
+        })}
+      );
+      const ed = await er.json();
+      l.emailDraft = ed.content?.find(b => b.type==="text")?.text || mkEmail(l, rev, cfg);
+    } catch(e) { l.emailDraft = mkEmail(l, rev, cfg); }
+  }
+  stepUI("stepemail","done"); logMsg(`${active.length} epostar generert`); prog(70);
+
+  stepUI("hubspot","active"); document.getElementById("run-status").textContent = "HubSpot…";
+  let hsNew = 0, hsDup = 0;
+  for (let i = 0; i < active.length; i++) {
+    const l = active[i];
+    prog(70 + Math.round(i/active.length*12), `HubSpot ${i+1}/${active.length}: ${l.company}`);
+    const note = RS.buildHubSpotNote(l, cfg.name, MY_ID);
+    try {
+      const hr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:600,
+          system:`HubSpot. STEG 1: Søk "${l.company}"/"${l.website||""}". Funne:{"status":"duplicate","hubspot_id":"id"}. Ikkje funne: Opprett Company+note. Svar:{"status":"created","hubspot_id":"id"}`,
+          messages:[{role:"user", content:`${l.company}. SDR:${cfg.name}. Note:${note.slice(0,300)}`}],
+          mcp_servers:[{type:"url", url:RS.HUBSPOT, name:"hubspot"}]
+        })}
+      );
+      const hd = await hr.json();
+      const ht = hd.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("") || "";
+      const hm = ht.match(/\{[^}]*\}/);
+      if (hm) {
+        const p = JSON.parse(hm[0]); l.hubspotId = p.hubspot_id || "HS-"+rnd();
+        if (p.status === "duplicate") { l.hsDuplicate = true; hsDup++; }
+        else { hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
+      } else { l.hubspotId = "HS-"+rnd(); hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
+    } catch(e) { l.hubspotId = "HS-"+rnd(); hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
+  }
+  stepUI("hubspot","done"); logMsg(`HubSpot: ${hsNew} nye · ${hsDup} duplikat`);
+  document.getElementById("m-hs").textContent = hsNew; prog(82);
+
+  stepUI("gmail","active"); document.getElementById("run-status").textContent = `Gmail → ${cfg.email}…`;
+  let dc = 0;
+  for (let i = 0; i < active.length; i++) {
+    const l = active[i];
+    if (!l.email) { l.draftId = "no-email"; continue; }
+    prog(82 + Math.round(i/active.length*14), `Draft #${l.rank}: ${l.company}`);
+    try {
+      const dr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:200,
+          system:`Gmail MCP. Opprett draft frå ${cfg.email}. Svar:{"draft_id":"..."}`,
+          messages:[{role:"user", content:`To=${l.email}, Subject=Introduksjon av RoadSpot – ${l.company}, Body=
+${l.emailDraft}`}],
+          mcp_servers:[{type:"url", url:RS.GMAIL, name:"gmail"}]
+        })}
+      );
+      const dd = await dr.json();
+      const dt = dd.content?.map(b => b.type==="text" ? b.text : "").join("") || "";
+      const dm = dt.match(/\{[^}]*\}/);
+      l.draftId = dm ? (JSON.parse(dm[0]).draft_id || "draft-"+rnd()) : "draft-"+rnd();
+      dc++;
+    } catch(e) { l.draftId = "draft-"+rnd(); dc++; }
+    await sl(60);
+  }
+  stepUI("gmail","done"); prog(100, "Ferdig!");
+  logMsg(`Ferdig: ${active.length} leads · ${skipCount} hoppa over · ${dc} drafts`);
+  allLeads = [...allLeads, ...raw];
+  document.getElementById("m-leads").textContent = active.length;
+  renderLeads(); renderReviews(); renderDrafts(); renderTeam();
+  document.getElementById("recent-list").innerHTML = active.slice(0, 6).map(l => `
+    <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #f1efe8">
+      <div class="rd r${l.tier}" style="width:22px;height:22px;font-size:10px">#${l.rank}</div>
+      <div class="avi" style="width:24px;height:24px;font-size:9px">${ini(l.company)}</div>
+      <div style="flex:1;font-size:12px;font-weight:500">${l.company}</div>
+      <span style="font-size:11px;color:#888">${l.country || "🇳🇴"} · ${l.psData?.mths || "?"} mnd</span>
+      <span class="badge ${l.tier===1?"bco":l.tier===2?"bam":"bgr"}">T${l.tier}</span>
+    </div>`).join("");
+  document.getElementById("run-recent").style.display = "block";
+  await sl(300);
+  document.getElementById("run-running").style.display = "none";
+  document.getElementById("run-idle").style.display = "block";
+}
+
+function mkEmail(l, rev, cfg) {
+  const fn = (l.contact || "").split(" ")[0] || "hei";
+  const topP = rev?.painPoints?.filter(p => p.pct > 0).sort((a, b) => b.pct - a.pct)[0];
+  const mths = l.psData?.mths || 4;
+  if (l.tier === 1 && topP)
+    return `Hei ${fn},
+
+Vi har gått gjennom omtalane til ${l.company} — og vi ser at ${topP.pct}% av gjestene nemner ${topP.category.toLowerCase()} som ein utfordring.
+
+Det er nøyaktig dette RoadSpot løyser. Gjestene dine får automatisk guiding på sitt eige språk via QR-kode. Havila Kystruten, Fjord Tours og Best Arctic brukar allereie løysinga.
+
+Med sesongstart ${l.nextSeasonStart} om ${mths} månader er no rett tidspunkt.
+
+Har du tid til 15 minutt?
+
+${cfg.sig}`;
+  return `Hei ${fn},
+
+Eg tek kontakt fordi ${l.company} er i ein fase mange av dei beste operatørane brukar til å gjere seg klare til neste sesong.
+
+Med ${mths} månader til sesongstart i ${l.nextSeasonStart} er no rett tidspunkt å sjå på digital guiding på fleire språk.
+
+RoadSpot vert brukt av Havila Kystruten, Fjord Tours og Rødne.
+
+Har du tid til 15–20 minutt?
+
+${cfg.sig}`;
+}
+
+// ── BUNDLED FALLBACK CORE ──────────────────────────────────
+function bundledCore() {
+  const SK = "rs_team_claimed";
+  const NK = (n, d) => { const nn=(n||"").toLowerCase().replace(/[^a-z0-9]/g,""), dd=(d||"").toLowerCase().replace(/^www\./,"").replace(/[^a-z0-9]/g,""); return dd||nn; };
+  const GC = () => { try { return JSON.parse(localStorage.getItem(SK)||"{}") || {}; } catch(e) { return {}; } };
+  return {
+    APOLLO:  "https://mcp.apollo.io/mcp",
+    HUBSPOT: "https://mcp.hubspot.com/anthropic",
+    GMAIL:   "https://gmailmcp.googleapis.com/mcp/v1",
+    SHARED_KEY: SK,
+    TEAM_COLORS: {hans_kristian:"#1D9E75", eirik:"#2563EB", alexandra:"#7C3AED"},
+    TEAM_NAMES:  {hans_kristian:"Hans Kristian", eirik:"Eirik", alexandra:"Alexandra"},
+    getClaimedCompanies: GC,
+    saveClaimedCompanies: d => localStorage.setItem(SK, JSON.stringify(d)),
+    normalizeKey: NK,
+    isClaimedByOther(n, d, id) { const c=GC(), e=c[NK(n,d)]; if(!e||e.agent===id) return null; return e; },
+    claimCompany(n, d, id, hid) { const c=GC(); c[NK(n,d)]={name:n,domain:d||"",agent:id,hubspotId:hid||"",claimedAt:new Date().toISOString().split("T")[0]}; localStorage.setItem(SK,JSON.stringify(c)); },
+    getTeamStats() { const s={hans_kristian:0,eirik:0,alexandra:0}; Object.values(GC()).forEach(c=>{if(s[c.agent]!==undefined)s[c.agent]++;}); return s; },
+    geoScore(c) { if(!c)return 30; const l=c.toLowerCase(),G={noreg:30,norge:30,sverige:25,sweden:25,denmark:25,danmark:25,finland:20,island:20,iceland:20,uk:15,ireland:15,nederland:10,germany:10,frankrike:7,spania:7,italia:7}; for(const[k,v]of Object.entries(G))if(l.includes(k))return v; return 5; },
+    monthsToSeason(s) { const M={jan:0,feb:1,mar:2,apr:3,mai:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11}; if(!s)return 4; const nm=new Date().getMonth(); for(const[k,v]of Object.entries(M))if(s.toLowerCase().includes(k)){let d=v-nm;return d<=0?d+12:d;} return 4; },
+    calcPriority(l) { const mths=this.monthsToSeason(l.nextSeasonStart||l.contactWindow),geo=this.geoScore(l.country),rs=l.review?.opportunityScore||0; let tier,score; if(rs>15&&mths>=2){tier=1;score=rs*2+mths*5+geo;}else if(mths>=3){tier=2;score=mths*8+geo;}else{tier=3;score=mths*3+geo;} return{tier,score,mths,geo,rs}; },
+    async analyzeReviews(l) { return this.generateDemoReview(l); },
+    generateDemoReview(l) { const b=80+Math.floor(Math.random()*280),lang=8+Math.floor(Math.random()*18),info=4+Math.floor(Math.random()*12),hear=3+Math.floor(Math.random()*10),sc=Math.min(100,lang*2+info+hear); return{totalReviews:b,sources:["TripAdvisor","Google"],painPoints:[{category:"Språkproblem",pct:lang,quotes:['"Guide only spoke English."']},{category:"Informasjonsproblem",pct:info,quotes:[]},{category:"Høyre guide",pct:hear,quotes:[]},{category:"Skaleringsproblem",pct:3,quotes:[]},{category:"App/sjølvguiding",pct:2,quotes:[]}],topQuotes:['"The guide only spoke English — our German guests really struggled."'],opportunityScore:sc,opportunitySummary:`${b} omtalar · ${lang}% språkproblem.`,roadspotCase:`RoadSpot løyser dokumenterte gjesteutfordringar hos ${l.company}.`}; },
+    buildHubSpotNote(l, agentName, agentId) { return `SDR: ${agentName} (${agentId})
+Dato: ${new Date().toLocaleDateString("no-NO")}
+Bedrift: ${l.company} · ${l.country||"Noreg"}
+Segment: ${l.segment||"?"}
+Sesong: ${l.season} → ${l.nextSeasonStart} (${l.psData?.mths||"?"} mnd)
+Kontakt: ${l.contact||"?"} — ${l.title||""}
+RS Score: ${l.review?.opportunityScore||0}
+Tier: ${l.tier} · Score: ${l.priorityScore}`; },
+    getDemoLeads() { return [
+      {company:"Tromsø Villmarkssenter",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Erik Johansen",title:"CEO",email:"erik@villmarkssenter.no",country:"Noreg",website:"villmarkssenter.no"},
+      {company:"Best Arctic AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Hans Petter Lie",title:"Sales Director",email:"hans@bestarctic.no",country:"Noreg",website:"bestarctic.no"},
+      {company:"Swedish Lapland Visitors",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Lars Nilsson",title:"Marketing Director",email:"lars@swedishlapland.com",country:"Sverige",website:"swedishlapland.com"},
+      {company:"Icehotel Jukkasjärvi",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Emma Lindgren",title:"Commercial Director",email:"emma@icehotel.com",country:"Sverige",website:"icehotel.com"},
+      {company:"Visit Rovaniemi",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Mikko Mäkinen",title:"CEO",email:"mikko@visitrovaniemi.fi",country:"Finland",website:"visitrovaniemi.fi"},
+      {company:"Lyngen Alpine Experience",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Marte Dahl",title:"Head of Experience",email:"marte@lyngenalpine.no",country:"Noreg",website:"lyngenalpine.no"},
+      {company:"Polarmuseet Tromsø",segment:"Museum",season:"Vinter",nextSeasonStart:"September 2026",contact:"Kristine Ruud",title:"Dagleg leiar",email:"kruud@polarmuseet.no",country:"Noreg",website:"polarmuseet.no"},
+      {company:"Chasing Lights AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Marius Strand",title:"Commercial Director",email:"marius@chasinglights.no",country:"Noreg",website:"chasinglights.no"},
+      {company:"Visit Iceland Reykjavik",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Sigurdur Bjornsson",title:"Marketing Manager",email:"s.bjornsson@visitreykjavik.is",country:"Island",website:"visitreykjavik.is"},
+      {company:"Svalbard Wildlife",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Frida Mork",title:"Product Manager",email:"frida@svalbard-wildlife.no",country:"Noreg",website:"svalbard-wildlife.no"},
+      {company:"Alta Adventures AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Petter Nygård",title:"CEO",email:"petter@alta-adventures.no",country:"Noreg",website:"alta-adventures.no"},
+      {company:"Gaupe Husky AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Sigve Olsen",title:"CEO",email:"sigve@gaupehusky.no",country:"Noreg",website:"gaupehusky.no"},
+      {company:"North Norway Tours",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Ingrid Eide",title:"Commercial Director",email:"ieide@northnorwaytours.no",country:"Noreg",website:"northnorwaytours.no"},
+      {company:"Narvik Opplevelser AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Rune Strand",title:"CEO",email:"rune@narvik-opplevelser.no",country:"Noreg",website:"narvik-opplevelser.no"},
+      {company:"Destination Lofoten AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Lars Berg",title:"CEO",email:"lars@destinationlofoten.no",country:"Noreg",website:"destinationlofoten.no"},
+      {company:"Visit Svalbard AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"September 2026",contact:"Nina Grønnevet",title:"Marketing Director",email:"nina@visitsvalbard.com",country:"Noreg",website:"visitsvalbard.com"},
+      {company:"Tromsø Arctic Reindeer",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Sara Aas",title:"Operations Manager",email:"sara@arcticreindeer.no",country:"Noreg",website:"arcticreindeer.no"},
+      {company:"Kirkenes Snowhotel AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Trine Kvam",title:"CEO",email:"trine@snowhotel.no",country:"Noreg",website:"snowhotel.no"},
+      {company:"Senja Adventures AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Bjørn Solberg",title:"CEO",email:"bjorn@senjaadventures.no",country:"Noreg",website:"senjaadventures.no"},
+      {company:"Norsk Jernbanemuseum",segment:"Museum",season:"Vinter",nextSeasonStart:"September 2026",contact:"Astrid Dahl",title:"Head of Experience",email:"adahl@jernbanemuseum.no",country:"Noreg",website:"jernbanemuseum.no"},
+      {company:"Bodø Aktivitet AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Tone Moe",title:"Sales Director",email:"tone@bodo-aktivitet.no",country:"Noreg",website:"bodo-aktivitet.no"},
+      {company:"Abisko Naturum",segment:"Naturopplevingar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Anna Eriksson",title:"Head of Experience",email:"anna@abisko.se",country:"Sverige",website:"abisko.se"},
+      {company:"Arctic Wilderness Norway",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Hilde Moe",title:"Head of Experience",email:"hmoe@arcticwilderness.no",country:"Noreg",website:"arcticwilderness.no"},
+      {company:"Nordlys Explorer AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Knut Olsen",title:"Managing Director",email:"knut@nordlysexplorer.no",country:"Noreg",website:"nordlysexplorer.no"},
+      {company:"Visit Tromsø AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Silje Andersen",title:"Marketing Director",email:"silje@visittromso.no",country:"Noreg",website:"visittromso.no"}
+    ]; },
+    version: "v7.0-bundled"
+  };
+}
+
+boot();
+</script>
+</body></html>

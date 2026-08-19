@@ -535,22 +535,22 @@ async function runAgent() {
   ["apollo","teamcheck","reviews","score","stepemail","hubspot","gmail"].forEach(s => stepUI(s, ""));
   logMsg("Køyring starta · " + cfg.name + " · " + new Date().toLocaleTimeString("no-NO"));
 
-  stepUI("apollo","active"); document.getElementById("run-status").textContent = "Finn selskap…"; prog(4);
+  stepUI("apollo","active");
+  document.getElementById("run-status").textContent = "Søkjer breitt etter selskap…"; prog(4);
+  logMsg("Steg 1: Web-søk → TripAdvisor · Viator · Google · Reddit…");
   let raw = [];
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:4000,
-        system: `Lead-agent for RoadSpot. Finn turistselskap ute av sesong i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min ${cfg.months} mnd til sesong. Bruk Apollo.io. 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"Nov 2026","contactWindow":"Jun-Sep 2026","contact":"","title":"","email":"","country":"Noreg"}]`,
-        messages: [{role:"user", content:"Finn 25 selskap."}],
-        mcp_servers: [{type:"url", url:RS.APOLLO, name:"apollo"}]
-      })}
-    );
-    const d = await r.json();
-    const txt = d.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("") || "";
-    const m = txt.match(/\[[\s\S]*?\]/);
-    if (m) { raw = JSON.parse(m[0]); logMsg(`Apollo: ${raw.length} selskap`); } else throw new Error();
-  } catch(e) { logMsg("Apollo: demo-data","warn"); raw = RS.getDemoLeads(); }
-  stepUI("apollo","done"); prog(14, `${raw.length} selskap`);
+    raw = await RS.findAndEnrichLeads(cfg);
+    if (raw.length > 0) {
+      logMsg("✓ " + raw.length + " selskap funne via web-søk + Apollo-berikking");
+    } else {
+      throw new Error("ingen resultat");
+    }
+  } catch(e) {
+    logMsg("Web-søk feila — brukar demo-data", "warn");
+    raw = RS.getDemoLeads();
+  }
+  stepUI("apollo","done"); prog(14, raw.length + " selskap funne");
 
   stepUI("teamcheck","active"); document.getElementById("run-status").textContent = "Teamsjekk…"; prog(17);
   let skipCount = 0;

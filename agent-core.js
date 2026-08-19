@@ -396,8 +396,8 @@ For kvart selskap du identifiserer — returner BERRE gyldig JSON array, ingen a
   "annualRevenue": 0
 }]
 
-Finn 20-30 selskap. Prioriter selskap med dokumenterte internasjonale gjester og mange reviews.`,
-        messages: [{role: "user", content: `Finn turistselskap i ${geoStr} som passar for RoadSpot. Sesong: ${seasonDesc}. Segment: ${segStr}.`}]
+Finn 20-30 selskap. KRITISK: Returner KUN selskap som faktisk held til i ${geoStr}. Ikkje inkluder selskap frå andre land. Prioriter selskap med dokumenterte internasjonale gjester og mange reviews.`,
+        messages: [{role: "user", content: `Finn turistselskap SOM HELD TIL I ${geoStr.toUpperCase()} — ingen andre land. Sesong: ${seasonDesc}. Segment: ${segStr}. Sjekk at kvart selskap du returnerer faktisk er frå ${geoStr}.`}]
       })
     });
     const d = await r.json();
@@ -405,7 +405,30 @@ Finn 20-30 selskap. Prioriter selskap med dokumenterte internasjonale gjester og
     const m = txt.match(/\[[\s\S]*\]/);
     if (m) {
       const companies = JSON.parse(m[0]);
-      return companies.filter(c => c.company && c.website);
+      // Strikt geo-filter: berre selskap frå valde land
+      const geoLower = cfg.geos.map(g => g.toLowerCase());
+      const GEO_MAP = {
+        'noreg': ['noreg','norge','norway','no'],
+        'sverige': ['sverige','sweden','se'],
+        'danmark': ['danmark','denmark','dk'],
+        'finland': ['finland','fi'],
+        'island': ['island','iceland','is'],
+        'uk': ['uk','united kingdom','england','scotland','wales','britain','gb'],
+        'nederland': ['nederland','netherlands','holland','nl'],
+        'tyskland': ['germany','deutschland','de','tyskland'],
+        'frankrike': ['france','frankrike','fr'],
+        'spania': ['spain','spania','es'],
+        'italia': ['italy','italia','it'],
+      };
+      const allowed = new Set();
+      geoLower.forEach(g => { (GEO_MAP[g] || [g]).forEach(v => allowed.add(v)); });
+      const filtered = companies.filter(c => {
+        if (!c.company || !c.website) return false;
+        const cCountry = (c.country || '').toLowerCase();
+        if (!cCountry) return true; // no country info — keep for now
+        return [...allowed].some(a => cCountry.includes(a));
+      });
+      return filtered.length > 0 ? filtered : companies.filter(c => c.company && c.website);
     }
     throw new Error("ingen JSON");
   } catch(e) {
@@ -512,7 +535,7 @@ async function findViaApolloFallback(cfg) {
     if (m) return JSON.parse(m[0]);
     throw new Error();
   } catch(e) {
-    return getDemoLeads();
+    return getDemoLeads(cfg);
   }
 }
 
@@ -527,8 +550,8 @@ function buildApolloPrompt(cfg) {
 }
 
 // ── DEMO LEADS (oppdatert med nye felt) ────────────────────
-function getDemoLeads() {
-  return [
+function getDemoLeads(cfg) {
+  const allLeads = [
     {company:"Tromsø Villmarkssenter",    segment:"Turoperatørar",     season:"Vinter",nextSeasonStart:"November 2026",contact:"Erik Johansen",    title:"CEO",               email:"erik@villmarkssenter.no",    country:"Noreg",  website:"villmarkssenter.no",  annualRevenue:25000000,estimatedGuests:8000, internationalGuestsMixed:true,  description:"Guidede turer med nordlys og hundekjøring for internasjonale grupper"},
     {company:"Arctic Adventure Svalbard", segment:"Turoperatørar",     season:"Vinter",nextSeasonStart:"Oktober 2026", contact:"Lena Berg",       title:"Commercial Director",email:"lena@arcticadventure.no",    country:"Noreg",  website:"arcticadventure.no",  annualRevenue:18000000,estimatedGuests:5000, internationalGuestsMixed:true,  description:"Ekspedisjonsturar Svalbard, blanda internasjonale grupper"},
     {company:"Swedish Lapland Visitors",  segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Lars Nilsson",     title:"Marketing Director", email:"lars@swedishlapland.com",   country:"Sverige",website:"swedishlapland.com", annualRevenue:45000000,estimatedGuests:20000,internationalGuestsMixed:true,  description:"Destinasjonsselskap for Lapland, mange nasjonalitetar"},
@@ -568,6 +591,6 @@ window.RS = {
   buildHubSpotNote, buildCompanyProfile,
   getDemoLeads, isExcludedSegment,
   buildApolloPrompt,
-  version: "v9.2 — " + new Date().toISOString().split("T")[0]
+  version: "v9.3 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Agent Core loaded:", window.RS.version);

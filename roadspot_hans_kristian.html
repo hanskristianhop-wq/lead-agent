@@ -134,6 +134,7 @@ textarea{min-height:80px;resize:vertical}
       <p style="font-size:13px;color:#666;margin-bottom:1rem">Finn 25 selskap → teamsjekk → reviews → prioritering → epost → HubSpot → Gmail drafts.</p>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button class="btn btn-p" onclick="runAgent()">▶ Start køyring</button>
+        <button class="btn" style="background:#FEF9C3;border-color:#EAB308;color:#854D0E" onclick="runTest()">🧪 Test (1 lead)</button>
         <button class="btn" onclick="T('team')">👥 Team</button>
         <button class="btn" onclick="T('settings')">⚙ Innstillingar</button>
         <button class="btn" onclick="window.open('https://mail.google.com/mail/u/0/#drafts','_blank')">↗ Gmail</button>
@@ -280,6 +281,129 @@ const STORE_K  = "rs-cfg-hans_kristian";
 const CORE_URL = "https://raw.githubusercontent.com/hanskristianhop-wq/lead-agent/main/agent-core.js";
 let RS = null, allLeads = [], logs = [], activeFilt = "all";
 
+// ── TEST RUN (1 lead → HubSpot + Gmail draft) ─────────────
+async function runTest() {
+  const cfg = getCfg();
+  if (!cfg.email) { alert("Legg inn e-postadressa di under Innstillingar fyrst!"); T("settings"); return; }
+
+  document.getElementById("run-idle").style.display = "none";
+  document.getElementById("run-running").style.display = "block";
+  ["apollo","teamcheck","reviews","score","stepemail","hubspot","gmail"].forEach(s => stepUI(s, ""));
+  document.getElementById("run-status").textContent = "TEST: Analyserer Havila Kystruten…";
+  prog(10);
+  logMsg("🧪 TEST-KØYRING starta — 1 selskap til dine drafts");
+
+  const testLead = {
+    company: "Havila Kystruten",
+    website: "havila.no",
+    segment: "Båt/cruise",
+    season: "Sommer",
+    nextSeasonStart: "April 2027",
+    contactWindow: "Aug-Okt 2026",
+    contact: "Bent Martini",
+    title: "CEO",
+    email: "bent@havila.no",
+    country: "Noreg",
+    annualRevenue: 800000000,
+    estimatedGuests: 60000,
+    internationalGuestsMixed: true,
+    description: "Kystruteskip langs norskekysten, 50%+ internasjonale gjester"
+  };
+
+  stepUI("apollo","done"); prog(14, "Test-selskap: Havila Kystruten");
+  stepUI("teamcheck","done"); prog(27, "Ikkje duplikat");
+
+  // Real review analysis
+  stepUI("reviews","active"); prog(30, "Søkjer reviews på Havila Kystruten…");
+  testLead.review = await RS.analyzeReviews(testLead);
+  logMsg(`Reviews: score ${testLead.review.opportunityScore}/100`);
+  stepUI("reviews","done"); prog(47);
+
+  // Priority
+  stepUI("score","active"); prog(50);
+  const ps = RS.calcPriority(testLead);
+  testLead.tier = ps.tier; testLead.priorityScore = ps.score; testLead.psData = ps; testLead.rank = 1;
+  stepUI("score","done"); prog(54);
+
+  // Email
+  stepUI("stepemail","active"); prog(57, "Genererer test-epost…");
+  const rev = testLead.review;
+  const topP = rev?.painPoints?.filter(p=>p.pct>0).sort((a,b)=>b.pct-a.pct)[0];
+  const topQ = rev?.topQuotes?.[0]||"";
+  try {
+    const er = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:600,
+        system:`Skreddarsydd sals-epost på norsk for RoadSpot frå ${cfg.name}. Maks 200 ord. Havila Kystruten er ein stor kunderutekunde. Start med konkret referanse til gjesteutfordringar. Referansekunder: Fjord Tours, Rødne, Best Arctic. Avslutt med:
+${cfg.sig}`,
+        messages:[{role:"user", content:`Epost til ${testLead.contact} (${testLead.title}) hos Havila Kystruten. Kystruteskip, 60.000 gjester/år, 50%+ internasjonale. Reviews: score ${rev.opportunityScore}/100. ${topP?`Hovudproblem: ${topP.pct}% ${topP.category.toLowerCase()}. Sitat: "${topQ}"`:""}. DETTE ER EIN TEST-EPOST — merk med [TEST] i emnefeltet.`}]
+      })});
+    const ed = await er.json();
+    testLead.emailDraft = "[TEST] " + (ed.content?.find(b=>b.type==="text")?.text || "Test-epost");
+  } catch(e) { testLead.emailDraft = `[TEST] Hei ${testLead.contact},
+
+Dette er ein test-epost frå RoadSpot Lead Agent.
+
+${cfg.sig}`; }
+  stepUI("stepemail","done"); prog(70);
+
+  // HubSpot — create test note
+  stepUI("hubspot","active"); prog(75, "Oppretter test-oppføring i HubSpot…");
+  const note = RS.buildHubSpotNote(testLead, cfg.name, MY_ID);
+  try {
+    const hr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:400,
+        system:`HubSpot. Søk "Havila Kystruten". Om funnen: returner {"status":"duplicate","hubspot_id":"id"}. Om ikkje funnen: Opprett Company med namn "Havila Kystruten [TEST]", legg til note. Svar: {"status":"created","hubspot_id":"id"}`,
+        messages:[{role:"user", content:`TEST: ${testLead.company}. SDR:${cfg.name}. Note:
+${note.slice(0,400)}`}],
+        mcp_servers:[{type:"url", url:RS.HUBSPOT, name:"hubspot"}]
+      })});
+    const hd = await hr.json();
+    const ht = hd.content?.map(b=>b.type==="text"?b.text:(b.type==="mcp_tool_result"?b.content?.[0]?.text||"":"")).join("") || "";
+    const hm = ht.match(/\{[^}]*\}/);
+    if (hm) {
+      const p = JSON.parse(hm[0]);
+      testLead.hubspotId = p.hubspot_id || "HS-TEST";
+      logMsg(`HubSpot: ${p.status === "duplicate" ? "Allereie finst" : "Oppretta"} — ${testLead.hubspotId}`);
+    } else {
+      testLead.hubspotId = "HS-TEST-" + Date.now();
+      logMsg("HubSpot: svar motteke (sjekk HubSpot manuelt)", "warn");
+    }
+  } catch(e) { testLead.hubspotId = "HS-TEST"; logMsg("HubSpot: feil — " + e.message, "warn"); }
+  stepUI("hubspot","done"); prog(85);
+
+  // Gmail draft
+  stepUI("gmail","active"); prog(88, `Gmail draft → ${cfg.email}…`);
+  try {
+    const dr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:200,
+        system:`Gmail MCP. Opprett draft frå ${cfg.email}. Svar:{"draft_id":"..."}`,
+        messages:[{role:"user", content:`To=${testLead.email}, Subject=[TEST] RoadSpot — Havila Kystruten, Body=
+${testLead.emailDraft}`}],
+        mcp_servers:[{type:"url", url:RS.GMAIL, name:"gmail"}]
+      })});
+    const dd = await dr.json();
+    const dt = dd.content?.map(b=>b.type==="text"?b.text:"").join("") || "";
+    const dm = dt.match(/\{[^}]*\}/);
+    testLead.draftId = dm ? (JSON.parse(dm[0]).draft_id || "draft-test") : "draft-test";
+    logMsg(`✓ Gmail draft oppretta: ${testLead.draftId}`);
+  } catch(e) { testLead.draftId = "draft-test"; logMsg("Gmail: feil — " + e.message, "warn"); }
+  stepUI("gmail","done"); prog(100, "Test ferdig!");
+
+  allLeads = [testLead];
+  document.getElementById("m-leads").textContent = "1 (TEST)";
+  renderLeads(); renderReviews(); renderDrafts(); renderTeam();
+
+  document.getElementById("recent-list").innerHTML = `
+    <div style="padding:8px;background:#FEF9C3;border-radius:8px;font-size:13px">
+      🧪 <strong>Test fullført!</strong> Sjekk Gmail-drafts og HubSpot for resultat.
+      <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank" style="color:#2563EB;margin-left:8px">Opne Gmail →</a>
+    </div>`;
+  document.getElementById("run-recent").style.display = "block";
+  await sl(300);
+  document.getElementById("run-running").style.display = "none";
+  document.getElementById("run-idle").style.display = "block";
+}
+
 // ── BOOT ───────────────────────────────────────────────────
 async function boot() {
   try {
@@ -343,13 +467,7 @@ function getCfg() {
     title:  s.title  || "CEO & Founder | RoadSpot",
     months: parseInt(s.months || 3),
     rev1:   s.rev1   === "yes",
-    sig:    s.sig    || "Med venleg helsing,
-
-Hans Kristian Hop
-CEO & Founder | RoadSpot
-Multilingual AI Audio Guiding for Professional Tourism
-+47 970 92 999
-hans.kristian.hop@roadspot.com | roadspot.com",
+    sig:    s.sig    || "Med venleg helsing,\n\nHans Kristian Hop\nCEO & Founder | RoadSpot\nMultilingual AI Audio Guiding for Professional Tourism\n+47 970 92 999\nhans.kristian.hop@roadspot.com | roadspot.com",
     geos:   s.geos   || ["Noreg", "Sverige", "Danmark"],
     segs:   s.segs   || ["Turoperatørar", "Båt/cruise", "Destinasjonsselskap"],
   };
@@ -455,6 +573,8 @@ function renderLeads() {
               ${l.contact ? `<span>${l.contact}</span>` : ""}
               ${sk2 ? `<span class="badge bsk">⚠ ${l.skipReason || "Team-duplikat"}</span>` : `<span class="badge bb">📅 ${l.nextSeasonStart || "?"} (${l.psData?.mths || "?"} mnd)</span>`}
               ${!sk2 && sc != null ? `<span class="badge ${sc >= 60 ? "bco" : sc >= 35 ? "bam" : "bgn"}">⭐ ${sc}</span>` : ""}
+              ${!sk2 && l.internationalGuestsMixed ? '<span class="badge" style="background:#FEF3C7;color:#92400E">🌍 Intl mix</span>' : ""}
+              ${!sk2 && l.estimatedRevenueBand ? `<span class="badge bgr">💰 ${l.estimatedRevenueBand}</span>` : ""}
               ${l.hubspotId && !l.hsDuplicate && !sk2 ? '<span class="badge bgn">✓ HS</span>' : ""}
               ${l.draftId && l.draftId !== "no-email" ? '<span class="badge bt">✉</span>' : ""}
             </div>
@@ -548,7 +668,7 @@ async function runAgent() {
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:4000,
-        system: `Lead-agent for RoadSpot. Finn turistselskap ute av sesong i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min ${cfg.months} mnd til sesong. Bruk Apollo.io. 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"Nov 2026","contactWindow":"Jun-Sep 2026","contact":"","title":"","email":"","country":"Noreg"}]`,
+        system: RS.buildApolloPrompt(cfg),
         messages: [{role:"user", content:"Finn 25 selskap."}],
         mcp_servers: [{type:"url", url:RS.APOLLO, name:"apollo"}]
       })}
@@ -585,6 +705,13 @@ async function runAgent() {
       await sl(80);
     }
   }
+  // Ekskluder ueigna segment og for små selskap
+  raw.forEach(l => {
+    if (!l.skippedByTeam && RS.isExcludedSegment(l)) {
+      l.skippedByTeam = true;
+      l.skipReason = "Ekskludert segment/for liten";
+    }
+  });
   const active = raw.filter(l => !l.skippedByTeam);
   logMsg(`Teamsjekk: ${active.length} klare · ${skipCount} hoppa over`);
   document.getElementById("m-skip").textContent = skipCount;

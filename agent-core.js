@@ -339,14 +339,191 @@ ${topQ ? `Sitat:\n${topQ}` : ""}
 Pipeline: Identified`;
 }
 
-// ── APOLLO QUERY BUILDER ────────────────────────────────────
-function buildApolloPrompt(cfg) {
+// ── SØKEPIPELINE: WEB-IDENTIFIKASJON → APOLLO-BERIKKING ──
+
+// Steg 1: Brei web-søk — finn selskap frå Google, TripAdvisor, Viator, Reddit
+async function findCompaniesViaWeb(cfg) {
+  const seasonDesc = cfg.months === 'vinter'
+    ? 'vinterturisme nordlys snø ski' 
+    : cfg.months === 'sommer'
+    ? 'sommarturisme fjord cruise båt'
+    : 'heilårs attraksjonar museum cruise destinasjon';
+
+  const geoStr = cfg.geos.slice(0,3).join(', ');
+  const segStr = cfg.segs.join(', ');
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4000,
+        tools: [{type: "web_search_20250305", name: "web_search"}],
+        system: `Du er ein expert på å finne turistselskap som er gode kandidatar for RoadSpot sitt AI-guidingsystem.
+
+RoadSpot løyser: internasjonale gjester på same tur som norske, språkbarrierar, skaleringsutfordringar.
+
+SØKESTRATEGI — gjer MINST 4 søk:
+1. TripAdvisor-søk: finn turoperatørar med mange internasjonale reviews i ${geoStr}
+2. Viator/GetYourGuide: finn selskap med pakketurar for internasjonale grupper (${seasonDesc})
+3. Bransjesøk: "turistselskap ${geoStr} internasjonale gjester"
+4. Reddit r/travel r/norway r/sweden: kva selskap nemner reisande frå utlandet?
+5. Destinasjons-søk: visitnorway.com, innovasjonnorge.no — kven er deira partnarar?
+
+INKLUDER: cruise, kystruteskip, fjordturar, destinasjonsselskap, naturparksentre, museum med mange besøkande, fjelljernbane, gondol, turistferje
+EKSKLUDER: kajakk, klatring, rafting, fjellguide (safety-guide aktivitetar), mikroselskap
+
+For kvart selskap du identifiserer — returner BERRE gyldig JSON array, ingen anna tekst:
+[{
+  "company": "Selskapsnamn",
+  "website": "nettside.no",
+  "segment": "Turoperatørar",
+  "season": "Vinter",
+  "nextSeasonStart": "vinter",
+  "country": "Noreg",
+  "description": "Kort beskriving av kva dei gjer og kvifor RoadSpot passar",
+  "internationalGuestsMixed": true,
+  "estimatedRevenueBand": "50-200M NOK",
+  "estimatedGuests": 15000,
+  "companySize": "Mellomstor",
+  "reviewSource": "TripAdvisor",
+  "reviewScore": 4.5,
+  "totalReviews": 340,
+  "contact": "",
+  "title": "",
+  "email": "",
+  "annualRevenue": 0
+}]
+
+Finn 20-30 selskap. Prioriter selskap med dokumenterte internasjonale gjester og mange reviews.`,
+        messages: [{role: "user", content: `Finn turistselskap i ${geoStr} som passar for RoadSpot. Sesong: ${seasonDesc}. Segment: ${segStr}.`}]
+      })
+    });
+    const d = await r.json();
+    const txt = d.content?.map(b => b.type === "text" ? b.text : "").join("") || "";
+    const m = txt.match(/\[[\s\S]*\]/);
+    if (m) {
+      const companies = JSON.parse(m[0]);
+      return companies.filter(c => c.company && c.website);
+    }
+    throw new Error("ingen JSON");
+  } catch(e) {
+    console.warn("Web-søk feila:", e.message);
+    return [];
+  }
+}
+
+// Steg 2: Apollo-berikking — finn kontaktperson og e-post for kvart selskap
+async function enrichWithApollo(companies) {
+  const enriched = [];
+
+  for (let i = 0; i < companies.length; i++) {
+    const company = companies[i];
+    // Allereie har kontaktinfo — hopp over
+    if (company.email && company.contact) {
+      enriched.push(company);
+      continue;
+    }
+
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
+          system: `Apollo.io berikking. Søk etter selskapet og finn kontaktperson med beslutningsmynde (CEO, Commercial Director, Sales Director, Marketing Director, Dagleg leiar). Returner KUN JSON, ingen anna tekst:
+{"contact": "Namn", "title": "Tittel", "email": "epost@domene.no", "phone": "", "linkedin": "", "annualRevenue": 0, "employeeCount": 0, "found": true}
+Om ikkje funne: {"found": false}`,
+          messages: [{role: "user", content: `Finn kontaktperson hos ${company.company} (${company.website || ''}, ${company.country || 'Noreg'})`}],
+          mcp_servers: [{type: "url", url: APOLLO, name: "apollo"}]
+        })
+      });
+      const d = await r.json();
+      const txt = d.content?.map(b =>
+        b.type === "text" ? b.text :
+        b.type === "mcp_tool_result" ? (b.content?.[0]?.text || "") : ""
+      ).join("") || "";
+      const m = txt.match(/\{[\s\S]*?\}/);
+      if (m) {
+        const info = JSON.parse(m[0]);
+        if (info.found !== false) {
+          company.contact = info.contact || company.contact || "";
+          company.title   = info.title   || company.title   || "";
+          company.email   = info.email   || company.email   || "";
+          company.phone   = info.phone   || company.phone   || "";
+          if (info.annualRevenue)  company.annualRevenue  = info.annualRevenue;
+          if (info.employeeCount)  company.employeeCount  = info.employeeCount;
+        }
+      }
+    } catch(e) {
+      // Held fram utan berikking
+    }
+    await new Promise(r => setTimeout(r, 100));
+    enriched.push(company);
+  }
+  return enriched;
+}
+
+// Steg 3: Kombinert pipeline — web-søk + Apollo-berikking + Apollo-fallback
+async function findAndEnrichLeads(cfg) {
+  // Steg 1: Brei web-identifikasjon
+  let companies = await findCompaniesViaWeb(cfg);
+
+  // Steg 2: Apollo-berikking for kontaktinfo
+  if (companies.length > 0) {
+    companies = await enrichWithApollo(companies.slice(0, 25));
+  }
+
+  // Fallback: om web-søk ikkje gav resultat, bruk Apollo direkte
+  if (companies.length < 5) {
+    companies = await findViaApolloFallback(cfg);
+  }
+
+  return companies.slice(0, 25);
+}
+
+// Apollo-fallback (original metode)
+async function findViaApolloFallback(cfg) {
   const seasonDesc = cfg.months === 'vinter'
     ? 'VINTER-operatørar: høgsesong nov-mar, men kan vere open heile året. Finn dei ute av sesong no.'
     : cfg.months === 'sommer'
     ? 'SOMMER-operatørar: høgsesong jun-aug, men kan vere open heile året. Finn dei ute av sesong no.'
     : 'HEILÅRS-operatørar: turistar og besøkande heile året, ingen lågsesong. Alltid aktuelle.';
-  return `Lead-agent for RoadSpot. Finn turistselskap i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min omsetning 10M NOK. EKSKLUDER: kajakk, klatring, rafting, fjellguide, safety-guide aktivitetar. INKLUDER: cruise, ferje, turoperatørar med grupper, destinasjonsselskap, museum, fjelljernbane. Sesongtype: ${seasonDesc} 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"vinter","contact":"","title":"","email":"","country":"Noreg","annualRevenue":0,"estimatedGuests":0,"internationalGuestsMixed":false,"description":""}]`;
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 4000,
+        system: `Lead-agent for RoadSpot. Finn turistselskap i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min omsetning 10M NOK. EKSKLUDER: kajakk, klatring, rafting, fjellguide, safety-guide aktivitetar. INKLUDER: cruise, ferje, turoperatørar med grupper, destinasjonsselskap, museum, fjelljernbane. Sesongtype: ${seasonDesc} 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"vinter","contact":"","title":"","email":"","country":"Noreg","annualRevenue":0,"estimatedGuests":0,"internationalGuestsMixed":false,"description":""}]`,
+        messages: [{role: "user", content: "Finn 25 selskap."}],
+        mcp_servers: [{type: "url", url: APOLLO, name: "apollo"}]
+      })
+    });
+    const d = await r.json();
+    const txt = d.content?.map(b =>
+      b.type === "text" ? b.text :
+      b.type === "mcp_tool_result" ? (b.content?.[0]?.text || "") : ""
+    ).join("") || "";
+    const m = txt.match(/\[[\s\S]*?\]/);
+    if (m) return JSON.parse(m[0]);
+    throw new Error();
+  } catch(e) {
+    return getDemoLeads();
+  }
+}
+
+// Behold buildApolloPrompt for bakoverkompatibilitet
+function buildApolloPrompt(cfg) {
+  const seasonDesc = cfg.months === 'vinter'
+    ? 'VINTER-operatørar: høgsesong nov-mar.'
+    : cfg.months === 'sommer'
+    ? 'SOMMER-operatørar: høgsesong jun-aug.'
+    : 'HEILÅRS-operatørar: alltid aktuelle.';
+  return `Lead-agent for RoadSpot. Finn turistselskap i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min omsetning 10M NOK. EKSKLUDER: kajakk, klatring, rafting, fjellguide. Sesongtype: ${seasonDesc} 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"vinter","contact":"","title":"","email":"","country":"Noreg","annualRevenue":0,"estimatedGuests":0,"internationalGuestsMixed":false,"description":""}]`;
 }
 
 // ── DEMO LEADS (oppdatert med nye felt) ────────────────────
@@ -391,6 +568,6 @@ window.RS = {
   buildHubSpotNote, buildCompanyProfile,
   getDemoLeads, isExcludedSegment,
   buildApolloPrompt,
-  version: "v9.1 — " + new Date().toISOString().split("T")[0]
+  version: "v9.2 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Agent Core loaded:", window.RS.version);

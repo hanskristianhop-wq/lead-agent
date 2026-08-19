@@ -236,12 +236,11 @@ textarea{min-height:80px;resize:vertical}
         <span class="tag" data-v="Kommunar" onclick="toggleTag(this)">Kommunar</span>
       </div>
     </div>
-    <div class="sr"><div><div class="sl">Min. mnd til sesong</div></div>
+    <div class="sr"><div><div class="sl">Høgsesong</div></div>
       <select id="cfg-months" onchange="saveCfg()">
-        <option value="2">2 månader</option>
-        <option value="3" selected>3 månader</option>
-        <option value="4">4 månader</option>
-        <option value="6">6 månader</option>
+        <option value="vinter" selected>Vinter (høgsesong vinter)</option>
+        <option value="sommer">Sommer (høgsesong sommer)</option>
+        <option value="heilars">Heilårs (pågang heile året)</option>
       </select>
     </div>
     <div class="sr"><div><div class="sl">Berre Tier 1</div></div>
@@ -341,7 +340,7 @@ function getCfg() {
     email:  s.email  || "hans.kristian.hop@roadspot.com",
     phone:  s.phone  || "+47 970 92 999",
     title:  s.title  || "CEO & Founder | RoadSpot",
-    months: parseInt(s.months || 3),
+    months: s.months || 'vinter',
     rev1:   s.rev1   === "yes",
     sig:    s.sig    || "Med venleg helsing,\n\nHans Kristian Hop\nCEO & Founder | RoadSpot\nMultilingual AI Audio Guiding for Professional Tourism\n+47 970 92 999\nhans.kristian.hop@roadspot.com | roadspot.com",
     geos:   s.geos   || ["Noreg", "Sverige", "Danmark"],
@@ -738,7 +737,17 @@ function bundledCore() {
     claimCompany(n, d, id, hid) { const c=GC(); c[NK(n,d)]={name:n,domain:d||"",agent:id,hubspotId:hid||"",claimedAt:new Date().toISOString().split("T")[0]}; localStorage.setItem(SK,JSON.stringify(c)); },
     getTeamStats() { const s={hans_kristian:0,eirik:0,alexandra:0}; Object.values(GC()).forEach(c=>{if(s[c.agent]!==undefined)s[c.agent]++;}); return s; },
     geoScore(c) { if(!c)return 30; const l=c.toLowerCase(),G={noreg:30,norge:30,sverige:25,sweden:25,denmark:25,danmark:25,finland:20,island:20,iceland:20,uk:15,ireland:15,nederland:10,germany:10,frankrike:7,spania:7,italia:7}; for(const[k,v]of Object.entries(G))if(l.includes(k))return v; return 5; },
-    monthsToSeason(s) { const M={jan:0,feb:1,mar:2,apr:3,mai:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11}; if(!s)return 4; const nm=new Date().getMonth(); for(const[k,v]of Object.entries(M))if(s.toLowerCase().includes(k)){let d=v-nm;return d<=0?d+12:d;} return 4; },
+    monthsToSeason(s) {
+      if(!s) return 4;
+      const sl=s.toLowerCase();
+      const nm=new Date().getMonth();
+      if(sl==='heilars'||sl==='heilårs') return 3;
+      if(sl==='vinter'){const v=[10,11,12,1,2,3];return v.includes(nm+1)?0:Math.max(1,10-nm);}
+      if(sl==='sommer'){const v=[6,7,8];return v.includes(nm+1)?0:Math.max(1,6-nm);}
+      const M={jan:0,feb:1,mar:2,apr:3,mai:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
+      for(const[k,v]of Object.entries(M))if(sl.includes(k)){let d=v-nm;return d<=0?d+12:d;}
+      return 4;
+    },
     calcPriority(l) { const mths=this.monthsToSeason(l.nextSeasonStart||l.contactWindow),geo=this.geoScore(l.country),rs=l.review?.opportunityScore||0; let tier,score; if(rs>15&&mths>=2){tier=1;score=rs*2+mths*5+geo;}else if(mths>=3){tier=2;score=mths*8+geo;}else{tier=3;score=mths*3+geo;} return{tier,score,mths,geo,rs}; },
     async analyzeReviews(l) { return this.generateDemoReview(l); },
     generateDemoReview(l) { const b=80+Math.floor(Math.random()*280),lang=8+Math.floor(Math.random()*18),info=4+Math.floor(Math.random()*12),hear=3+Math.floor(Math.random()*10),sc=Math.min(100,lang*2+info+hear); return{totalReviews:b,sources:["TripAdvisor","Google"],painPoints:[{category:"Språkproblem",pct:lang,quotes:['"Guide only spoke English."']},{category:"Informasjonsproblem",pct:info,quotes:[]},{category:"Høyre guide",pct:hear,quotes:[]},{category:"Skaleringsproblem",pct:3,quotes:[]},{category:"App/sjølvguiding",pct:2,quotes:[]}],topQuotes:['"The guide only spoke English — our German guests really struggled."'],opportunityScore:sc,opportunitySummary:`${b} omtalar · ${lang}% språkproblem.`,roadspotCase:`RoadSpot løyser dokumenterte gjesteutfordringar hos ${l.company}.`}; },

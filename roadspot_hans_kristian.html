@@ -585,7 +585,7 @@ async function runAgent() {
   stepUI("reviews","active"); document.getElementById("run-status").textContent = "Søkjer reviews…";
   for (let i = 0; i < active.length; i++) {
     prog(27 + Math.round(i/active.length*20), `Reviews ${i+1}/${active.length}: ${active[i].company}`);
-    active[i].review = i < 4 ? await RS.analyzeReviews(active[i]) : RS.generateDemoReview(active[i]);
+    active[i].review = await RS.analyzeReviews(active[i]);
     if (active[i].review.opportunityScore > 15) logMsg(`✓ Reviews: ${active[i].company} (${active[i].review.opportunityScore})`);
     await sl(80);
   }

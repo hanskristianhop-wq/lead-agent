@@ -221,40 +221,68 @@ Returner KUN gyldig JSON utan preamble eller markdown:
 }
 
 function generateDemoReview(lead) {
-  const base = 80 + Math.floor(Math.random()*280);
-  const lang=6+Math.floor(Math.random()*20), info=4+Math.floor(Math.random()*12),
-        hear=2+Math.floor(Math.random()*12), scl=1+Math.floor(Math.random()*8),
-        app=1+Math.floor(Math.random()*5);
-  const sc = Math.min(100, lang*2+info+hear+scl+app);
-  return {
-    totalReviews:base, sources:["TripAdvisor","Google Reviews","Viator"],
+  const b=80+Math.floor(Math.random()*280);
+  const lang=6+Math.floor(Math.random()*20);
+  const info=4+Math.floor(Math.random()*12);
+  const hear=2+Math.floor(Math.random()*12);
+  const scl=1+Math.floor(Math.random()*8);
+  const app=1+Math.floor(Math.random()*5);
+  const sc=Math.min(100,lang*2+info+hear+scl+app);
+  const name=lead.company||"selskapet";
+  const seg=(lead.segment||"").toLowerCase();
+  const isCruise=seg.includes("båt")||seg.includes("cruise");
+  const isMuseum=seg.includes("museum");
+
+  const rnd=arr=>arr[Math.floor(Math.random()*arr.length)];
+
+  const langQuotes=isCruise?[
+    `"Announcements on board were only in English — our Japanese group was completely lost."`,
+    `"The commentary was great but only available in Norwegian and English."`,
+    `"We had guests from 12 countries on board. Only the English speakers could follow."`
+  ]:isMuseum?[
+    `"The audio guide only covers Norwegian and English. Our French tour group struggled."`,
+    `"No multilingual options at the exhibits — very disappointing for international visitors."`,
+    `"We brought a group from Germany and they couldn't follow any of the explanations."`
+  ]:[
+    `"Our guide only spoke English and Norwegian — the Asian guests in our group were frustrated."`,
+    `"Half our group was German. There was no German language option whatsoever."`,
+    `"Beautiful experience, but the language barrier made it hard for our international guests."`
+  ];
+  const hearQuotes=isCruise?[
+    `"With 80 passengers on deck it was impossible to hear the guide."`,
+    `"The ship's PA system crackled and half the commentary was lost."`
+  ]:[
+    `"Group of 40 people and one guide with no microphone — chaos."`,
+    `"The guide was excellent but with 35 people it was impossible to follow."`
+  ];
+  const infoQuotes=[
+    `"Loved the experience but wanted much more depth on the history."`,
+    `"Would have loved a way to listen to the information again at my own pace."`,
+    `"The guide rushed through — I had so many questions unanswered."`
+  ];
+
+  return{
+    totalReviews:b,
+    sources:["TripAdvisor","Google Reviews","Viator"],
     painPoints:[
-      {category:"Språkproblem",       pct:lang, quotes:['"The guide only spoke English — our German guests really struggled."']},
-      {category:"Informasjonsproblem", pct:info, quotes:['"Would have loved more background stories."']},
-      {category:"Høyre guide",         pct:hear, quotes:['"Hard to hear at the back of the group."']},
-      {category:"Skaleringsproblem",   pct:scl,  quotes:['"40 people is too many for a guided tour."']},
-      {category:"App/sjølvguiding",    pct:app,  quotes:['"An audio guide option would be great."']}
+      {category:"Språkproblem",      pct:lang, quotes:[rnd(langQuotes)]},
+      {category:"Informasjonsproblem",pct:info, quotes:[rnd(infoQuotes)]},
+      {category:"Høyre guide",        pct:hear, quotes:[rnd(hearQuotes)]},
+      {category:"Skaleringsproblem",  pct:scl,  quotes:[]},
+      {category:"App/sjølvguiding",   pct:app,  quotes:[]}
     ],
-    topQuotes:[
-      '"The guide only spoke English — our German guests really struggled."',
-      '"With 40 people it was impossible to hear."',
-      '"More information about the history would have been wonderful."'
-    ],
+    topQuotes:[rnd(langQuotes), rnd(hearQuotes)],
     opportunityScore:sc,
-    opportunitySummary:`${base} omtalar · ${lang+hear}% peikar på problem RoadSpot løyser`,
-    roadspotCase:`GPS-guiding på 30+ språk løyser dokumenterte gjesteutfordringar`,
-    internationalGuestsMixed: Math.random() > 0.5,
-    internationalMixNote: "Internasjonale og norske gjester på same tur",
-    estimatedRevenueBand: "20-50M NOK",
-    estimatedGuests: Math.floor(5000 + Math.random()*20000),
-    companySize: "Mellomstor (10-50 tilsette)",
-    operationType: "Turoperatør med faste ruter",
-    isExcluded: false,
-    exclusionReason: ""
+    opportunitySummary:`${b} omtalar · ${lang+hear}% peikar direkte på problem RoadSpot løyser`,
+    roadspotCase:`GPS-guiding på 30+ språk løyser dokumenterte gjesteutfordringar hos ${name}`,
+    internationalGuestsMixed:lead.internationalGuestsMixed||(Math.random()>0.4),
+    estimatedRevenueBand:lead.estimatedRevenueBand||"20-50M NOK",
+    estimatedGuests:lead.estimatedGuests||Math.floor(5000+Math.random()*20000),
+    companySize:lead.companySize||"Mellomstor (10-50 tilsette)",
+    operationType:lead.operationType||lead.segment
   };
 }
 
-// ── DEEP COMPANY ANALYSIS (1-page max) ─────────────────────
 function buildCompanyProfile(lead, review) {
   const intlFlag = (lead.internationalGuestsMixed || review?.internationalGuestsMixed) ? "🌍 Internasjonale + norske gjester på same tur" : "";
   const revBand = lead.estimatedRevenueBand || review?.estimatedRevenueBand || "Ukjend";

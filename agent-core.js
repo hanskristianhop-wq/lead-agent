@@ -90,10 +90,32 @@ function geoScore(country) {
   return 3;
 }
 function monthsToSeason(str) {
-  const M = {jan:0,feb:1,mar:2,apr:3,mai:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
+  // Støttar både gamle mnd-tal og nye sesongtypar: vinter, sommer, heilars
   if (!str) return 4;
+  const s = str.toLowerCase();
+
+  // Nye sesongtypar
+  if (s === 'heilars' || s === 'heilårs') {
+    // Heilårs: alltid tilgjengeleg — gir konstant medium score
+    return 3;
+  }
+  if (s === 'vinter') {
+    // Høgsesong vinter — no er aug, dvs 3 mnd til nov
+    const vintermnd = [10, 11, 12, 1, 2, 3]; // nov-mar
+    const inSeason = vintermnd.includes(NOW_MONTH + 1);
+    return inSeason ? 0 : Math.min(10 - NOW_MONTH, 12 - NOW_MONTH + 10); // rough estimate
+  }
+  if (s === 'sommer') {
+    // Høgsesong sommer — jun-aug
+    const sommermnd = [6, 7, 8]; // jun-aug
+    const inSeason = sommermnd.includes(NOW_MONTH + 1);
+    return inSeason ? 0 : Math.abs(6 - (NOW_MONTH + 1));
+  }
+
+  // Gammal logikk: tekststreng med månadsnamn (t.d. "November 2026")
+  const M = {jan:0,feb:1,mar:2,apr:3,mai:4,may:4,jun:5,jul:6,aug:7,sep:8,okt:9,oct:9,nov:10,des:11,dec:11};
   for (const [k,v] of Object.entries(M)) {
-    if (str.toLowerCase().includes(k)) {
+    if (s.includes(k)) {
       let d = v - NOW_MONTH;
       return d <= 0 ? d + 12 : d;
     }
@@ -101,6 +123,11 @@ function monthsToSeason(str) {
   return 4;
 }
 function calcPriority(lead) {
+  const seasonType = (lead.nextSeasonStart || lead.contactWindow || '').toLowerCase();
+  const isHeilaars = seasonType === 'heilars' || seasonType === 'heilårs';
+  const isVinter   = seasonType === 'vinter';
+  const isSommer   = seasonType === 'sommer';
+
   const mths = monthsToSeason(lead.nextSeasonStart || lead.contactWindow);
   const geo  = geoScore(lead.country);
   const rs   = lead.review?.opportunityScore || 0;
@@ -110,16 +137,22 @@ function calcPriority(lead) {
   const intlBonus = lead.internationalGuestsMixed ? 20 : 0;
   // Bonus for stor omsetning
   const revBonus = lead.annualRevenue > 50000000 ? 15 : lead.annualRevenue > 20000000 ? 8 : 0;
+  // Heilårs-bonus: alltid kontaktbar, ikkje avhengig av sesong
+  const seasonBonus = isHeilaars ? 12 : 0;
 
   let tier, score;
-  if (hasRev && mths >= 2) {
+  if (isHeilaars) {
+    // Heilårs: alltid Tier 2 minimum, Tier 1 om reviews er gode
+    if (hasRev) { tier=1; score=rs*2 + 25 + geo + intlBonus + revBonus + seasonBonus; }
+    else         { tier=2; score=40 + geo + intlBonus + revBonus + seasonBonus; }
+  } else if (hasRev && mths >= 2) {
     tier=1; score=rs*2 + mths*5 + geo + intlBonus + revBonus;
   } else if (mths >= 3) {
     tier=2; score=mths*8 + geo + (rs>0?rs*.5:0) + intlBonus + revBonus;
   } else {
     tier=3; score=mths*3 + geo + intlBonus;
   }
-  return { tier, score, mths, geo, rs, intlBonus, revBonus };
+  return { tier, score, mths, geo, rs, intlBonus, revBonus, seasonBonus, isHeilaars, isVinter, isSommer };
 }
 
 // ── DEEP REVIEW ANALYSIS ───────────────────────────────────
@@ -280,17 +313,12 @@ Pipeline: Identified`;
 
 // ── APOLLO QUERY BUILDER ────────────────────────────────────
 function buildApolloPrompt(cfg) {
-  return `Lead-agent for RoadSpot. Finn turistselskap i ${cfg.geos.join(", ")}.
-
-KRITERIER:
-- Segment: ${cfg.segs.join(", ")}
-- Min ${cfg.months} mnd til sesongstart
-- Omsetning: MINIMUM 10 millionar NOK (ca $1M USD)
-- INKLUDER: cruise, ferje, turoperatørar med store grupper, destinasjonsselskap, museumstog, fjelljernbane
-- EKSKLUDER: kajakk, klatring, rafting, fjellguide (safety-aktivitetar), private dagsturer med maks 8 personar
-- PRIORITER: selskap der internasjonale og norske gjester er på SAME tur/avgang
-- 25 selskap. KUN JSON array:
-[{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"Nov 2026","contactWindow":"Jun-Sep 2026","contact":"","title":"","email":"","country":"Noreg","annualRevenue":0,"estimatedGuests":0,"internationalGuestsMixed":false,"description":""}]`;
+  const seasonDesc = cfg.months === 'vinter'
+    ? 'VINTER-operatørar: høgsesong nov-mar, men kan vere open heile året. Finn dei ute av sesong no.'
+    : cfg.months === 'sommer'
+    ? 'SOMMER-operatørar: høgsesong jun-aug, men kan vere open heile året. Finn dei ute av sesong no.'
+    : 'HEILÅRS-operatørar: turistar og besøkande heile året, ingen lågsesong. Alltid aktuelle.';
+  return `Lead-agent for RoadSpot. Finn turistselskap i ${cfg.geos.join(", ")}. Segment: ${cfg.segs.join(", ")}. Min omsetning 10M NOK. EKSKLUDER: kajakk, klatring, rafting, fjellguide, safety-guide aktivitetar. INKLUDER: cruise, ferje, turoperatørar med grupper, destinasjonsselskap, museum, fjelljernbane. Sesongtype: ${seasonDesc} 25 selskap. KUN JSON: [{"company":"","website":"","segment":"","season":"Vinter","nextSeasonStart":"vinter","contact":"","title":"","email":"","country":"Noreg","annualRevenue":0,"estimatedGuests":0,"internationalGuestsMixed":false,"description":""}]`;
 }
 
 // ── DEMO LEADS (oppdatert med nye felt) ────────────────────
@@ -335,6 +363,6 @@ window.RS = {
   buildHubSpotNote, buildCompanyProfile,
   getDemoLeads, isExcludedSegment,
   buildApolloPrompt,
-  version: "v8.0 — " + new Date().toISOString().split("T")[0]
+  version: "v9.0 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Agent Core loaded:", window.RS.version);

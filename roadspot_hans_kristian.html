@@ -711,6 +711,27 @@ ${l.emailDraft}`}],
   }
   stepUI("gmail","done"); prog(100, "Ferdig!");
   logMsg(`Ferdig: ${active.length} leads · ${skipCount} hoppa over · ${dc} drafts`);
+
+  // Lagre til Drive-minne
+  if (driveMemory && RS.addToMemory) {
+    const cfg2 = getCfg();
+    active.forEach(l => { if (l.hubspotId || l.draftId) RS.addToMemory(driveMemory, l, MY_ID, cfg2.name); });
+    RS.addRunToMemory(driveMemory, {
+      date: new Date().toISOString().split("T")[0],
+      agentId: MY_ID, agentName: cfg2.name,
+      geos: cfg2.geos, months: cfg2.months,
+      found: raw.length, newLeads: active.length,
+      skipped: skipCount, drafts: dc,
+      tier1: active.filter(l=>l.tier===1).length,
+    });
+    try {
+      logMsg("Lagrar minne til Drive…");
+      await RS.saveMemory(driveMemory);
+      logMsg("✓ Drive-minne oppdatert — " + Object.keys(driveMemory.companies).length + " selskap totalt");
+    } catch(e) { logMsg("Drive-lagring feila: " + e.message, "warn"); }
+    updateMemoryUI();
+  }
+
   allLeads = [...allLeads, ...raw];
   document.getElementById("m-leads").textContent = active.length;
   renderLeads(); renderReviews(); renderDrafts(); renderTeam();

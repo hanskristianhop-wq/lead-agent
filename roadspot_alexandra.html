@@ -678,7 +678,7 @@ async function runAgent() {
     if (i < 8) {
       try {
         const hr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:200,
+          body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:200,
             system:`HubSpot. Søk "${l.company}"/"${l.website||""}". Svar: {"found":true,"hubspot_id":"id"} eller {"found":false}`,
             messages:[{role:"user", content:`Finst ${l.company}?`}],
             mcp_servers:[{type:"url", url:RS.HUBSPOT, name:"hubspot"}]
@@ -720,26 +720,79 @@ async function runAgent() {
   for (let i = 0; i < active.length; i++) {
     const l = active[i];
     prog(54 + Math.round(i/active.length*16), `Epost #${l.rank}: ${l.company}`);
-    const rev = l.review, topP = rev?.painPoints?.filter(p=>p.pct>0).sort((a,b)=>b.pct-a.pct)[0], topQ = rev?.topQuotes?.[0]||"";
+    const rev = l.review;
+    const prof = RS.buildCompanyProfile(l, rev);
+    const topP = rev?.painPoints?.filter(p=>p.pct>0).sort((a,b)=>b.pct-a.pct)[0];
+    const topQ = rev?.topQuotes?.[0] || "";
     try {
-      const er = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:600,
-          system:`Skreddarsydd sals-epost på norsk for RoadSpot frå ${cfg.name}. Maks 200 ord. ${l.tier===1&&topP?"Start med konkret referanse til deira eigne gjesteomtalar.":"Vis forståing for sesong og type verksemd."} Referansekunder: Havila Kystruten, Fjord Tours, Rødne, Best Arctic. Avslutt med:
+      const er = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 700,
+          system: `Du skriv personlege sals-epostar på norsk for RoadSpot frå ${cfg.name}. Maks 220 ord.
+
+RoadSpot løyser tre kjernebehov for turistselskap:
+1. SPRÅK — gjesten får guiding på sitt eige språk, automatisk via GPS på mobilen
+2. VARETAKING — gjesten er trygg og informert heile vegen, med praktisk info undervegs
+3. VALFRIDOM — gjesten vel kva dei er interesserte i (kultur, natur, historie, mat)
+
+STRUKTUR:
+1. Personleg opnar — vis at du kjenner deira gjester og kva dei driv med
+2. Ein setning om RoadSpot — GPS-basert, automatisk, mobil, fleirspråkleg guiding
+3. "For [selskap] kan dette bety:" + 4 konkrete punkt for DEIRA gjestetype og segment
+4. Setning om moderne reisande — dei vil lokale historier og valfridom, ikkje berre kart
+5. Enkel å starte, skalerbar, ferdige ruter = nye inntektsmoglegheiter
+6. Mjuk CTA: tilby ein prat, roadspot.com
+
+TONE: Varm, kollegial, direkte. Ikkje selje — vis forståing for deira utfordringar.
+${l.tier===1&&topP?"Tier 1: Start med det konkrete sitatet frå gjestane deira.":""}
+${l.internationalGuestsMixed?"Internasjonale gjester: Legg vekt på at alle — uansett nasjonalitet — skal ha like god oppleving på same tur.":""}
+Referansekunder: Havila Kystruten, Fjord Tours, Rødne, Best Arctic.
+Avslutt med signaturen:
 ${cfg.sig}`,
-          messages:[{role:"user", content:`Skriv epost til ${l.contact||"leiinga"} (${l.title||""}) hos ${l.company}.
+          messages: [{role: "user", content: `Skriv epost til ${l.contact||"leiinga"} (${l.title||""}) hos ${l.company}.
 
 SELSKAP: ${l.company} | ${l.country} | ${prof.opType}
 OMSETNING: ${prof.revBand} | GJESTER: ${prof.guests}
 SESONG: ${l.nextSeasonStart||"?"} (${l.psData?.mths||"?"} mnd til)
 INTERNASJONALE GJESTER: ${l.internationalGuestsMixed?"Ja — internasjonale og norske på same tur":"Nei/ukjend"}
 ${l.tier===1&&topP?"REVIEWS ("+rev?.totalReviews+" omtalar, score "+rev?.opportunityScore+"/100):\nHovudproblem: "+topP.pct+"% "+topP.category.toLowerCase()+". Sitat: \""+topQ+"\" — start eposta med dette":""}
-${l.internationalGuestsMixed?"VIKTIG: Vektlegg at alle gjester — uansett språk — skal ha like god oppleving på same tur":""}
+${l.internationalGuestsMixed?"VIKTIG: Alle gjester — uansett språk — skal ha like god oppleving på same tur":""}
 
-SIGNATUR SOM AVSLUTNING:
-${cfg.sig}`}],
-          mcp_servers:[{type:"url", url:RS.HUBSPOT, name:"hubspot"}]
-        })}
-      );
+SIGNATUR:
+${cfg.sig}`}]
+        })
+      });
+      const ed = await er.json();
+      l.emailDraft = ed.content?.find(b => b.type==="text")?.text || mkEmail(l, rev, cfg);
+    } catch(e) {
+      l.emailDraft = mkEmail(l, rev, cfg);
+    }
+    await sl(60);
+  }
+  stepUI("stepemail","done"); logMsg(active.length + " epostar generert"); prog(70);
+
+  // STEG 6: HubSpot
+  stepUI("hubspot","active"); document.getElementById("run-status").textContent = "HubSpot…";
+  let hsNew = 0, hsDup = 0;
+  for (let i = 0; i < active.length; i++) {
+    const l = active[i];
+    prog(70 + Math.round(i/active.length*12), `HubSpot ${i+1}/${active.length}: ${l.company}`);
+    const note = RS.buildHubSpotNote(l, cfg.name);
+    try {
+      const hr = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 600,
+          system: `HubSpot. Søk "${l.company}". Funnen: {"status":"duplicate","hubspot_id":"id"}. Ikkje funnen: Opprett Company + note, svar {"status":"created","hubspot_id":"id"}`,
+          messages: [{role: "user", content: `${l.company}. SDR:${cfg.name}. Note:\n${note.slice(0,300)}`}],
+          mcp_servers: [{type: "url", url: RS.HUBSPOT, name: "hubspot"}]
+        })
+      });
       const hd = await hr.json();
       const ht = hd.content?.map(b => b.type==="text" ? b.text : (b.type==="mcp_tool_result" ? b.content?.[0]?.text||"" : "")).join("") || "";
       const hm = ht.match(/\{[^}]*\}/);
@@ -751,6 +804,7 @@ ${cfg.sig}`}],
     } catch(e) { l.hubspotId = "HS-"+rnd(); hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
   }
   stepUI("hubspot","done"); logMsg(`HubSpot: ${hsNew} nye · ${hsDup} duplikat`);
+  document.getElementById("m-hs").textContent = hsNew; prog(82); logMsg(`HubSpot: ${hsNew} nye · ${hsDup} duplikat`);
   document.getElementById("m-hs").textContent = hsNew; prog(82);
 
   stepUI("gmail","active"); document.getElementById("run-status").textContent = `Gmail → ${cfg.email}…`;
@@ -761,7 +815,7 @@ ${cfg.sig}`}],
     prog(82 + Math.round(i/active.length*14), `Draft #${l.rank}: ${l.company}`);
     try {
       const dr = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:200,
+        body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:200,
           system:`Gmail MCP. Opprett draft frå ${cfg.email}. Svar:{"draft_id":"..."}`,
           messages:[{role:"user", content:`To=${l.email}, Subject=Introduksjon av RoadSpot – ${l.company}, Body=
 ${l.emailDraft}`}],

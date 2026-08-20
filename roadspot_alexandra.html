@@ -870,6 +870,12 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
       const f=all.filter(c=>{const cc=(c.country||'').toLowerCase();return[...ok].some(a=>cc.includes(a));});
       return f.length>0?f:all;
     },
+    loadMemory: async function() { return {runs:[],companies:{},lastRun:null,totalLeads:0}; },
+    saveMemory: async function(m) { return; },
+    memoryHasCompany: function(m,l) { if(!m||!m.companies)return false; const k=(l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); return !!(k&&m.companies[k]); },
+    addToMemory: function(m,l,id,name) { const k=(l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); if(!k)return; m.companies[k]={company:l.company,website:l.website||'',agent:id,agentName:name,hubspotId:l.hubspotId||'',draftId:l.draftId||'',tier:l.tier||0,score:l.priorityScore||0,date:new Date().toISOString().split('T')[0]}; },
+    addRunToMemory: function(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; m.totalLeads=(m.totalLeads||0)+(r.newLeads||0); },
+    makeCompanyKey: function(l) { return (l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); },
     version: "v9.4-bundled"
   };
 }

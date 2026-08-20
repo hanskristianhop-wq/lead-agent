@@ -724,8 +724,27 @@ async function runAgent() {
     try {
       const er = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({model:"claude-sonnet-4-20250514", max_tokens:600,
-          system:`Skreddarsydd sals-epost på norsk for RoadSpot frå ${cfg.name}. Maks 200 ord. ${l.tier===1&&topP?"Start med konkret referanse til deira eigne gjesteomtalar.":"Vis forståing for sesong og type verksemd."} Referansekunder: Havila Kystruten, Fjord Tours, Rødne, Best Arctic. Avslutt med:
-${cfg.sig}`,
+          system:`Du skriv personlege sals-epostar på norsk for RoadSpot frå ${cfg.name}. Maks 220 ord.
+
+RoadSpot løyser tre kjernebehov for turistselskap:
+1. SPRÅK — gjesten får guiding på sitt eige språk, automatisk via GPS på mobilen
+2. VARETAKING — gjesten føler seg trygg og informert heile vegen, praktisk info undervegs
+3. VALFRIDOM — gjesten vel kva dei er interesserte i (kultur, natur, historie, mat)
+
+STRUKTUR:
+1. Personleg opnar (1 setning) — vis at du kjenner dei og kva dei driv med
+2. Kvifor du tek kontakt (1 setning) — nemn RoadSpot og GPS-basert fleirspråkleg guiding på mobil
+3. "For [selskap] kan dette bety:" + 4 konkrete bullet-punkt tilpassa DEIRA gjestetype og segment
+4. Ei setning om moderne reisande: dei vil meir enn kart — dei vil lokale historier og valfridom
+5. Enkel å ta i bruk, skalerbar, ferdige ruter = nye inntektsmoglegheiter
+6. Mjuk CTA — tilby ein prat, roadspot.com
+
+TONE: Varm, kollegial, direkte. Ikkje selje — vis forståing for DEIRA gjesteutfordringar.
+TIER 1: Start med det konkrete sitatet frå gjestane deira.
+INTERNASJONALE GJESTER: Legg vekt på at alle gjester — uansett nasjonalitet — får like god oppleving på same tur.
+Referansekunder du kan nemne: Havila Kystruten, Fjord Tours, Rødne, Best Arctic.
+Avslutt med signaturen nøyaktig slik:`
+${cfg.sig}\`,
           messages:[{role:"user", content:`Epost til ${l.contact||"leiinga"} (${l.title||""}) hos ${l.company} (${l.country},${l.segment}). Tier ${l.tier}. Sesongstart ${l.nextSeasonStart} (${l.psData?.mths||"?"} mnd).${l.tier===1&&topP?` Reviews: ${rev.totalReviews} omtalar, ${topP.pct}% ${topP.category.toLowerCase()}. Sitat: "${topQ}"`:""}` }]
         })}
       );

@@ -230,7 +230,18 @@ async function findCompaniesViaWeb(cfg) {
     : "heilårs attraksjonar museum cruise";
   try {
     const txt = await apiCall(
-      `Finn turistselskap som passar for RoadSpot sitt AI-guidingsystem i ${geoStr}. Gjer minst 4 søk: TripAdvisor, Viator/GetYourGuide, Google bransjesøk, Reddit r/travel. INKLUDER: cruise, kystruteskip, fjordturar, destinasjonsselskap, naturparksentre, museum, fjelljernbane, gondol, turistferje. EKSKLUDER: kajakk, klatring, rafting, fjellguide. Min omsetning 10M NOK. KRITISK: Returner KUN selskap frå ${geoStr}. KUN JSON array: [{"company":"","website":"","segment":"","season":"","nextSeasonStart":"vinter","country":"","description":"","internationalGuestsMixed":false,"estimatedRevenueBand":"","estimatedGuests":0,"companySize":"","contact":"","title":"","email":"","annualRevenue":0}]`,
+      `Du er ein expert på turistbransjen i ${geoStr}. Gjer MINST 6 ulike søk for å finne 20-25 relevante selskap:
+1. "best tour operators ${geoStr} TripAdvisor reviews"
+2. "cruise ferry ${geoStr} tourist international guests"
+3. "destination management company ${geoStr}"
+4. "museum visitor attraction ${geoStr} international tourists"
+5. "guided tours ${geoStr} Viator GetYourGuide"
+6. Reddit r/travel "${geoStr} tour company recommend"
+
+INKLUDER: cruise, ferje, kystruteskip, turoperatørar med grupper, destinasjonsselskap, museum/attraksjonar, gondol, turisttog, hop-on-hop-off bussar.
+EKSKLUDER: kajakk, klatring, rafting, fjellguide, overlevelsesturar.
+Min omsetning 10M NOK / £1M GBP. KRITISK: Returner KUN selskap som FAKTISK held til i ${geoStr}. Mål: 20-25 selskap.
+KUN JSON array: [{"company":"","website":"","segment":"","season":"","nextSeasonStart":"vinter","country":"","description":"","internationalGuestsMixed":false,"estimatedRevenueBand":"","estimatedGuests":0,"companySize":"","contact":"","title":"","email":"","annualRevenue":0}]`,
       `Finn 20-25 turistselskap i ${geoStr.toUpperCase()} for RoadSpot. Sesong: ${seasonDesc}.`,
       [], [{type:"web_search_20250305",name:"web_search"}]
     );
@@ -289,10 +300,39 @@ async function findViaApolloFallback(cfg) {
 }
 
 async function findAndEnrichLeads(cfg) {
+  // Steg 1: Web-søk
   let companies = await findCompaniesViaWeb(cfg);
-  if (companies.length>0) companies = await enrichWithApollo(companies.slice(0,25));
-  if (companies.length<5) companies = await findViaApolloFallback(cfg);
-  return companies.slice(0,25);
+
+  // Steg 2: Fyll opp til 25 via Apollo om web-søket gir for lite
+  if (companies.length < 25) {
+    const apolloResults = await findViaApolloFallback(cfg);
+    // Legg til Apollo-resultat som ikkje allereie er med
+    const existing = new Set(companies.map(c => (c.website||c.company||"").toLowerCase()));
+    for (const c of apolloResults) {
+      const key = (c.website||c.company||"").toLowerCase();
+      if (!existing.has(key)) { companies.push(c); existing.add(key); }
+      if (companies.length >= 25) break;
+    }
+  }
+
+  // Steg 3: Fyll opp med demo-data om framleis under 25
+  if (companies.length < 25) {
+    const demo = getDemoLeads(cfg);
+    const existing = new Set(companies.map(c => (c.website||c.company||"").toLowerCase()));
+    for (const c of demo) {
+      const key = (c.website||c.company||"").toLowerCase();
+      if (!existing.has(key)) { companies.push(c); existing.add(key); }
+      if (companies.length >= 25) break;
+    }
+  }
+
+  // Steg 4: Apollo-berikking (hent kontaktinfo for topp 15)
+  const needsEnrichment = companies.filter(c => !c.email || !c.contact);
+  if (needsEnrichment.length > 0) {
+    await enrichWithApollo(needsEnrichment.slice(0, 15));
+  }
+
+  return companies.slice(0, 25);
 }
 
 function buildApolloPrompt(cfg) { /* legacy */ return ""; }
@@ -342,6 +382,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.0 — " + new Date().toISOString().split("T")[0]
+  version: "v10.1 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

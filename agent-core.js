@@ -607,6 +607,9 @@ function getDemoLeads(cfg) {
 }
 
 window.RS = {
+  // Memory
+  loadMemory, saveMemory, memoryHasCompany, addToMemory, addRunToMemory, makeCompanyKey,
+  DRIVE_MCP,
   APOLLO, HUBSPOT, GMAIL,
   SHARED_KEY, TEAM_COLORS, TEAM_NAMES,
   getClaimedCompanies, saveClaimedCompanies, normalizeKey,
@@ -616,6 +619,6 @@ window.RS = {
   buildHubSpotNote, buildCompanyProfile,
   getDemoLeads: (cfg) => getDemoLeads(cfg), isExcludedSegment,
   buildApolloPrompt,
-  version: "v9.3 — " + new Date().toISOString().split("T")[0]
+  version: "v9.4 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Agent Core loaded:", window.RS.version);

@@ -276,7 +276,29 @@ const MY_ID    = "alexandra";
 const MY_NAME  = "Alexandra";
 const STORE_K  = "rs-cfg-alexandra";
 const CORE_URL = "https://raw.githubusercontent.com/hanskristianhop-wq/lead-agent/main/agent-core.js";
-let RS = null, allLeads = [], logs = [], activeFilt = "all";
+let RS = null, allLeads = [], logs = [], activeFilt = "all", driveMemory = null;
+
+// ── MEMORY UI ─────────────────────────────────────────────
+function updateMemoryUI() {
+  if (!driveMemory) return;
+  const compCount = Object.keys(driveMemory.companies || {}).length;
+  const runCount  = (driveMemory.runs || []).length;
+  const el = document.getElementById("memory-status");
+  if (el) {
+    el.innerHTML = compCount > 0
+      ? `📂 <strong>${compCount} selskap</strong> i minnet · ${runCount} køyringar · siste: ${driveMemory.lastRun || "aldri"}`
+      : `📂 Tomt minne — første køyring`;
+  }
+  // Show last runs
+  const rl = document.getElementById("run-history");
+  if (rl && driveMemory.runs?.length > 0) {
+    rl.innerHTML = driveMemory.runs.slice(0,5).map(r =>
+      `<div class="ll"><span class="lt">${r.date}</span><span class="lok">✓</span>` +
+      `<span>${r.agentName} · ${r.newLeads || 0} nye · ${r.skipped || 0} hoppa over · ${r.geos?.join(", ") || ""}</span></div>`
+    ).join("");
+    document.getElementById("run-history-card").style.display = "block";
+  }
+}
 
 // ── BOOT ───────────────────────────────────────────────────
 async function boot() {
@@ -300,8 +322,25 @@ async function boot() {
   }
   loadCfg();
   renderTeam();
+
+  // Last minne frå Google Drive
+  document.getElementById("boot-msg").textContent = "Lastar minne frå Drive…";
+  try {
+    driveMemory = await RS.loadMemory();
+    const compCount = Object.keys(driveMemory.companies || {}).length;
+    const runCount  = (driveMemory.runs || []).length;
+    logMsg(`✓ Drive-minne lasta: ${compCount} selskap, ${runCount} tidl. køyringar`);
+    if (driveMemory.lastRun) {
+      logMsg(`Siste køyring: ${driveMemory.lastRun}`);
+    }
+  } catch(e) {
+    driveMemory = { runs: [], companies: {}, lastRun: null, totalLeads: 0 };
+    logMsg("Drive-minne ikkje tilgjengeleg — startar tomt", "warn");
+  }
+
   document.getElementById("boot").style.display = "none";
   document.getElementById("mainapp").style.display = "block";
+  updateMemoryUI();
 }
 
 // ── SETTINGS ───────────────────────────────────────────────
@@ -810,7 +849,7 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
       const f=all.filter(c=>{const cc=(c.country||'').toLowerCase();return[...ok].some(a=>cc.includes(a));});
       return f.length>0?f:all;
     },
-    version: "v9.3-bundled"
+    version: "v9.4-bundled"
   };
 }
 

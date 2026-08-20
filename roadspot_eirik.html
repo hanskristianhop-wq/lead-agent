@@ -403,11 +403,11 @@ async function boot() {
   // Last minne frå Google Drive
   document.getElementById("boot-msg").textContent = "Lastar minne frå Drive…";
   try {
-    if (RS && typeof RS.loadMemory === "function") {
+    driveMemory = await loadMemory();
       driveMemory = await loadMemory();
-    } else {
-      driveMemory = { runs: [], companies: {}, lastRun: null, totalLeads: 0 };
-    }
+
+
+
     const compCount = Object.keys(driveMemory.companies || {}).length;
     const runCount  = (driveMemory.runs || []).length;
     logMsg(`✓ Drive-minne: ${compCount} selskap, ${runCount} tidl. køyringar`);

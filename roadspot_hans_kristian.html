@@ -327,13 +327,15 @@ async function boot() {
   // Last minne frå Google Drive
   document.getElementById("boot-msg").textContent = "Lastar minne frå Drive…";
   try {
-    driveMemory = await RS.loadMemory();
+    if (RS && typeof RS.loadMemory === "function") {
+      driveMemory = await RS.loadMemory();
+    } else {
+      driveMemory = { runs: [], companies: {}, lastRun: null, totalLeads: 0 };
+    }
     const compCount = Object.keys(driveMemory.companies || {}).length;
     const runCount  = (driveMemory.runs || []).length;
-    logMsg(`✓ Drive-minne lasta: ${compCount} selskap, ${runCount} tidl. køyringar`);
-    if (driveMemory.lastRun) {
-      logMsg(`Siste køyring: ${driveMemory.lastRun}`);
-    }
+    logMsg(`✓ Drive-minne: ${compCount} selskap, ${runCount} tidl. køyringar`);
+    if (driveMemory.lastRun) logMsg(`Siste køyring: ${driveMemory.lastRun}`);
   } catch(e) {
     driveMemory = { runs: [], companies: {}, lastRun: null, totalLeads: 0 };
     logMsg("Drive-minne ikkje tilgjengeleg — startar tomt", "warn");

@@ -281,55 +281,6 @@ let RS = null, allLeads = [], logs = [], activeFilt = "all", driveMemory = null;
 
 
 
-// ── MINNE — localStorage (alltid tilgjengeleg, ingen auth) ─
-const MEMORY_KEY = "rs_drive_memory"; // same key = shared if same browser
-
-async function loadMemory() {
-  try {
-    const raw = localStorage.getItem(MEMORY_KEY);
-    if (!raw) return {runs:[],companies:{},lastRun:null,totalLeads:0};
-    return JSON.parse(raw);
-  } catch(e) {
-    return {runs:[],companies:{},lastRun:null,totalLeads:0};
-  }
-}
-
-async function saveMemory(memory) {
-  try {
-    localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
-  } catch(e) { console.warn("saveMemory feil:", e.message); }
-}
-
-function memoryHasCompany(mem, lead) {
-  if (!mem||!mem.companies) return false;
-  const k = makeCompanyKey(lead);
-  return !!(k && mem.companies[k]);
-}
-function makeCompanyKey(lead) {
-  return (lead.website||lead.company||"").toLowerCase()
-    .replace(/^www\./,"").replace(/[^a-z0-9]/g,"");
-}
-function addToMemory(mem, lead, agentId, agentName) {
-  const k = makeCompanyKey(lead);
-  if (!k) return;
-  if (!mem.companies) mem.companies = {};
-  mem.companies[k] = {
-    company: lead.company, website: lead.website||"", country: lead.country||"",
-    agent: agentId, agentName, hubspotId: lead.hubspotId||"",
-    draftId: lead.draftId||"", tier: lead.tier||0,
-    score: lead.priorityScore||0, reviewScore: lead.review?.opportunityScore||0,
-    date: new Date().toISOString().split("T")[0]
-  };
-}
-function addRunToMemory(mem, run) {
-  if (!mem.runs) mem.runs = [];
-  mem.runs.unshift(run);
-  if (mem.runs.length > 90) mem.runs = mem.runs.slice(0,90);
-  mem.lastRun = run.date;
-  mem.totalLeads = (mem.totalLeads||0) + (run.newLeads||0);
-}
-
-
 // ── MEMORY UI ─────────────────────────────────────────────
 function updateMemoryUI() {
   if (!driveMemory) return;
@@ -351,6 +302,19 @@ function updateMemoryUI() {
     document.getElementById("run-history-card").style.display = "block";
   }
 }
+
+// ── MINNE (localStorage) ─────────────────────────────────
+const MEMORY_KEY = "rs_drive_memory";
+async function loadMemory() {
+  try { const r=localStorage.getItem(MEMORY_KEY); return r?JSON.parse(r):{runs:[],companies:{},lastRun:null,totalLeads:0}; } catch { return {runs:[],companies:{},lastRun:null,totalLeads:0}; }
+}
+async function saveMemory(m) {
+  try { localStorage.setItem(MEMORY_KEY, JSON.stringify(m)); } catch(e) { logMsg("Minne-lagring feila","warn"); }
+}
+function memoryHasCompany(m,l) { if(!m?.companies)return false; const k=mkKey(l); return !!(k&&m.companies[k]); }
+function mkKey(l) { return (l.website||l.company||"").toLowerCase().replace(/^www\./,"").replace(/[^a-z0-9]/g,""); }
+function addToMemory(m,l,id,name) { const k=mkKey(l); if(!k)return; if(!m.companies)m.companies={}; m.companies[k]={company:l.company,website:l.website||"",country:l.country||"",agent:id,agentName:name,hubspotId:l.hubspotId||"",tier:l.tier||0,date:new Date().toISOString().split("T")[0]}; }
+function addRunToMemory(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; m.totalLeads=(m.totalLeads||0)+(r.newLeads||0); }
 
 // ── BOOT ───────────────────────────────────────────────────
 async function boot() {

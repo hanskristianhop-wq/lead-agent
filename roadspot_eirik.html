@@ -374,14 +374,9 @@ async function boot() {
   loadCfg();
   renderTeam();
 
-  // Last minne frå Google Drive
-  document.getElementById("boot-msg").textContent = "Lastar minne frå Drive…";
+  // Last minne (localStorage)
   try {
     driveMemory = await loadMemory();
-      driveMemory = await loadMemory();
-
-
-
     const compCount = Object.keys(driveMemory.companies || {}).length;
     const runCount  = (driveMemory.runs || []).length;
     logMsg(`✓ Drive-minne: ${compCount} selskap, ${runCount} tidl. køyringar`);

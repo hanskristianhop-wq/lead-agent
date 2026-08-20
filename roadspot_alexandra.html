@@ -278,6 +278,83 @@ const STORE_K  = "rs-cfg-alexandra";
 const CORE_URL = "https://raw.githubusercontent.com/hanskristianhop-wq/lead-agent/main/agent-core.js";
 let RS = null, allLeads = [], logs = [], activeFilt = "all", driveMemory = null;
 
+
+// ── DRIVE MINNE — inline, alltid tilgjengeleg ─────────────
+const DRIVE_MCP_URL = "https://drivemcp.googleapis.com/mcp/v1";
+const MEMORY_FILENAME = "roadspot_memory.json";
+
+async function driveCallRaw(systemPrompt, userMsg) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6", max_tokens: 2000,
+      system: systemPrompt,
+      messages: [{role: "user", content: userMsg}],
+      mcp_servers: [{type: "url", url: DRIVE_MCP_URL, name: "gdrive"}]
+    })
+  });
+  const d = await r.json();
+  return (d.content||[]).map(b =>
+    b.type==="text" ? b.text :
+    b.type==="mcp_tool_result" ? (b.content?.[0]?.text||"") : ""
+  ).join("");
+}
+
+async function loadMemory() {
+  try {
+    const txt = await driveCallRaw(
+      `Google Drive. Søk etter fila "${MEMORY_FILENAME}". Om ho finst: last ned og returner innhaldet som rein JSON. Om ikkje: returner teksten NOTFOUND`,
+      `Finn og returner innhaldet av ${MEMORY_FILENAME}`
+    );
+    if (!txt || txt.includes("NOTFOUND") || txt.trim()==="") {
+      return {runs:[],companies:{},lastRun:null,totalLeads:0};
+    }
+    const m = txt.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+  } catch(e) { console.warn("loadMemory feil:", e.message); }
+  return {runs:[],companies:{},lastRun:null,totalLeads:0};
+}
+
+async function saveMemory(memory) {
+  try {
+    const jsonStr = JSON.stringify(memory, null, 2);
+    await driveCallRaw(
+      `Google Drive. Søk etter "${MEMORY_FILENAME}". Om funnen: oppdater innhaldet. Om ikkje funnen: opprett fila. Svar berre OK.`,
+      `Oppdater ${MEMORY_FILENAME}:
+${jsonStr}`
+    );
+  } catch(e) { console.warn("saveMemory feil:", e.message); }
+}
+
+function memoryHasCompany(mem, lead) {
+  if (!mem||!mem.companies) return false;
+  const k = makeCompanyKey(lead);
+  return !!(k && mem.companies[k]);
+}
+function makeCompanyKey(lead) {
+  return (lead.website||lead.company||"").toLowerCase()
+    .replace(/^www\./,"").replace(/[^a-z0-9]/g,"");
+}
+function addToMemory(mem, lead, agentId, agentName) {
+  const k = makeCompanyKey(lead);
+  if (!k) return;
+  mem.companies[k] = {
+    company: lead.company, website: lead.website||"", country: lead.country||"",
+    agent: agentId, agentName, hubspotId: lead.hubspotId||"",
+    draftId: lead.draftId||"", tier: lead.tier||0,
+    score: lead.priorityScore||0, reviewScore: lead.review?.opportunityScore||0,
+    date: new Date().toISOString().split("T")[0]
+  };
+}
+function addRunToMemory(mem, run) {
+  if (!mem.runs) mem.runs = [];
+  mem.runs.unshift(run);
+  if (mem.runs.length > 90) mem.runs = mem.runs.slice(0,90);
+  mem.lastRun = run.date;
+  mem.totalLeads = (mem.totalLeads||0) + (run.newLeads||0);
+}
+
 // ── MEMORY UI ─────────────────────────────────────────────
 function updateMemoryUI() {
   if (!driveMemory) return;
@@ -327,7 +404,7 @@ async function boot() {
   document.getElementById("boot-msg").textContent = "Lastar minne frå Drive…";
   try {
     if (RS && typeof RS.loadMemory === "function") {
-      driveMemory = await RS.loadMemory();
+      driveMemory = await loadMemory();
     } else {
       driveMemory = { runs: [], companies: {}, lastRun: null, totalLeads: 0 };
     }
@@ -716,8 +793,8 @@ ${l.emailDraft}`}],
   // Lagre til Drive-minne
   if (driveMemory && RS.addToMemory) {
     const cfg2 = getCfg();
-    active.forEach(l => { if (l.hubspotId || l.draftId) RS.addToMemory(driveMemory, l, MY_ID, cfg2.name); });
-    RS.addRunToMemory(driveMemory, {
+    active.forEach(l => { if (l.hubspotId || l.draftId) addToMemory(driveMemory, l, MY_ID, cfg2.name); });
+    addRunToMemory(driveMemory, {
       date: new Date().toISOString().split("T")[0],
       agentId: MY_ID, agentName: cfg2.name,
       geos: cfg2.geos, months: cfg2.months,
@@ -727,7 +804,7 @@ ${l.emailDraft}`}],
     });
     try {
       logMsg("Lagrar minne til Drive…");
-      await RS.saveMemory(driveMemory);
+      await saveMemory(driveMemory);
       logMsg("✓ Drive-minne oppdatert — " + Object.keys(driveMemory.companies).length + " selskap totalt");
     } catch(e) { logMsg("Drive-lagring feila: " + e.message, "warn"); }
     updateMemoryUI();
@@ -878,13 +955,7 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
     addToMemory: function(m,l,id,name) { const k=(l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); if(!k)return; m.companies[k]={company:l.company,website:l.website||'',agent:id,agentName:name,hubspotId:l.hubspotId||'',draftId:l.draftId||'',tier:l.tier||0,score:l.priorityScore||0,date:new Date().toISOString().split('T')[0]}; },
     addRunToMemory: function(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; m.totalLeads=(m.totalLeads||0)+(r.newLeads||0); },
     makeCompanyKey: function(l) { return (l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); },
-    loadMemory: async function() { return {runs:[],companies:{},lastRun:null,totalLeads:0}; },
-    saveMemory: async function(m) { return; },
-    memoryHasCompany: function(m,l) { if(!m||!m.companies)return false; const k=(l.website||l.company||"").toLowerCase().replace(/[^a-z0-9]/g,""); return !!(k&&m.companies[k]); },
-    addToMemory: function(m,l,id,name) { const k=(l.website||l.company||"").toLowerCase().replace(/[^a-z0-9]/g,""); if(!k)return; m.companies[k]={company:l.company,website:l.website||"",agent:id,agentName:name,hubspotId:l.hubspotId||"",date:new Date().toISOString().split("T")[0]}; },
-    addRunToMemory: function(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; },
-    makeCompanyKey: function(l) { return (l.website||l.company||"").toLowerCase().replace(/[^a-z0-9]/g,""); },
-    version: "v9.4-bundled"
+        version: "v9.4-bundled"
   };
 }
 

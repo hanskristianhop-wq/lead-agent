@@ -230,7 +230,11 @@ async function findCompaniesViaWeb(cfg) {
     : "heilårs attraksjonar museum cruise";
   try {
     const txt = await apiCall(
-      `Du er ein expert på turistbransjen i ${geoStr}. Gjer MINST 6 ulike søk for å finne 20-25 relevante selskap:
+      `Du er ein expert på turistbransjen. Søkeomraade: ${geoStr}.
+    
+    Viktig om regionar: Skottland = Scotland UK. England-Nord = North England/Yorkshire/Manchester/Liverpool. England-Sør = London/Southeast. Île-de-France = Paris-regionen. Bayern = Bavaria Germany. New England = Maine/Vermont/Massachusetts osv. Mid-Atlantic = New York/Pennsylvania. Pacific Coast = California/Oregon/Washington.
+    
+     Gjer MINST 6 ulike søk for å finne 20-25 relevante selskap:
 1. "best tour operators ${geoStr} TripAdvisor reviews"
 2. "cruise ferry ${geoStr} tourist international guests"
 3. "destination management company ${geoStr}"
@@ -250,17 +254,54 @@ KUN JSON array: [{"company":"","website":"","segment":"","season":"","nextSeason
     const companies = JSON.parse(m[0]).filter(c=>c.company&&c.website);
     // Geo-filter
     const GM={
+    // Skandinavia
     noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
-    danmark:["danmark","denmark"],finland:["finland"],
-    island:["island","iceland"],
-    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","northern ireland"],
+    danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
+    // UK regionar
+    uk:["uk","united kingdom","england","scotland","britain","wales","northern ireland","ireland"],
     skottland:["scotland","skottland"],
-    england:["england"],
+    "england-nord":["north england","yorkshire","lancashire","cumbria","newcastle","manchester","liverpool","nord-england"],
+    "england-sør":["south england","london","kent","essex","sussex","surrey","sør-england","southeast england","southwest england"],
     wales:["wales","cymru"],
-    irland:["ireland","eire","irland"],
-    nederland:["nederland","netherlands","holland"],
+    "nord-irland":["northern ireland","nord-irland"],
+    irland:["ireland","eire","republic of ireland","irland"],
+    // Frankrike
+    frankrike:["france","frankrike"],
+    "île-de-france":["paris","île-de-france","ile de france"],
+    normandie:["normandie","normandy"],
+    bretagne:["bretagne","brittany","breton"],
+    provence:["provence","côte d'azur","cote d'azur","marseille","nice"],
+    "alpane-fr":["alps","alpane","savoie","chamonix","grenoble"],
+    loiredalen:["loire","loiredalen","loire valley"],
+    alsace:["alsace","strasbourg","alsatian"],
+    // Tyskand
     tyskland:["germany","deutschland","tyskland"],
-    frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]
+    bayern:["bavaria","bayern","munich","münchen","bavarian"],
+    "nord-tyskland":["hamburg","bremen","schleswig","nord-tyskland","north germany"],
+    rheinland:["rhine","rheinland","cologne","köln","düsseldorf","bonn"],
+    "aust-tyskland":["saxony","sachsen","dresden","leipzig","aust-tyskland"],
+    berlin:["berlin"],
+    // USA
+    usa:["usa","united states","america","us"],
+    "new england":["new england","maine","vermont","new hampshire","massachusetts","rhode island","connecticut"],
+    "mid-atlantic":["new york","new jersey","pennsylvania","maryland","delaware","virginia","dc","washington"],
+    "southeast usa":["florida","georgia","south carolina","north carolina","tennessee","alabama","mississippi","louisiana"],
+    "midwest usa":["ohio","michigan","indiana","illinois","wisconsin","minnesota","iowa","missouri"],
+    "mountain west":["colorado","utah","wyoming","montana","idaho","nevada","arizona","new mexico"],
+    "pacific coast":["california","oregon","washington state","los angeles","san francisco","seattle","portland"],
+    "texas gulf":["texas","houston","dallas","austin","louisiana","gulf coast"],
+    "alaska hawaii":["alaska","hawaii","hawaiian"],
+    // Andre
+    nederland:["nederland","netherlands","holland"],
+    belgia:["belgium","belgia","belgique"],
+    sveits:["switzerland","sveits","schweiz","suisse"],
+    austerrike:["austria","austerrike","österreich"],
+    italia:["italy","italia"],
+    spania:["spain","spania","españa"],
+    canada:["canada","canadian"],
+    australia:["australia","australian"],
+    "new zealand":["new zealand","aotearoa"],
+    japan:["japan","japanese"]
   };
     const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
     const filtered=companies.filter(c=>{const cc=(c.country||"").toLowerCase(); return !cc||[...ok].some(a=>cc.includes(a));});
@@ -372,7 +413,25 @@ function getDemoLeads(cfg) {
     {company:"Visit Scotland",        segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"UK",     website:"visitscotland.com",     annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true, description:"Skottlands turistorganisasjon"},
     {company:"Caledonian MacBrayne",  segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",     website:"calmac.co.uk",          annualRevenue:180000000,estimatedGuests:200000,internationalGuestsMixed:true, description:"Ferjeselskap Skottland"},
     {company:"National Trust Scotland",segment:"Museum",            nextSeasonStart:"heilars", country:"UK",     website:"nts.org.uk",            annualRevenue:95000000, estimatedGuests:300000,internationalGuestsMixed:true, description:"Historiske attraksjonar Skottland"},
-    {company:"Rederij Lovers",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Nederland",website:"lovers.nl",          annualRevenue:35000000, estimatedGuests:800000,internationalGuestsMixed:true, description:"Kanalcruise Amsterdam"},
+    {company:"Rederij Lovers",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Nederland",website:"lovers.nl",
+    // FRANKRIKE
+    {company:"Paris City Vision",     segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Île-de-France", website:"pariscityvision.com",  annualRevenue:85000000, estimatedGuests:500000, internationalGuestsMixed:true, description:"Guidede turar Paris, 90%+ internasjonale turistar"},
+    {company:"Bateaux Mouches",       segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"Île-de-France", website:"bateaux-mouches.fr",   annualRevenue:45000000, estimatedGuests:1200000,internationalGuestsMixed:true, description:"Seinecruise Paris, ikonisk attraksjon"},
+    {company:"Normandy American Tours",segment:"Turoperatørar",     nextSeasonStart:"sommer",  country:"Normandie",     website:"normandy-tours.com",   annualRevenue:18000000, estimatedGuests:40000,  internationalGuestsMixed:true, description:"D-dag og krigshistorie, nesten 100% internasjonale"},
+    {company:"Mont Saint-Michel Tours",segment:"Turoperatørar",     nextSeasonStart:"sommer",  country:"Normandie",     website:"mtsaintmichel-tours.com",annualRevenue:22000000,estimatedGuests:80000,  internationalGuestsMixed:true, description:"Guidede turar til Mont Saint-Michel"},
+    {company:"Brittany Ferries",      segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"Bretagne",      website:"brittany-ferries.fr",  annualRevenue:900000000,estimatedGuests:2000000,internationalGuestsMixed:true, description:"Stor fergjeoperatør Bretagne-UK-Irland"},
+    {company:"Riviera Bar Crawl Nice", segment:"Turoperatørar",     nextSeasonStart:"sommer",  country:"Provence",      website:"rivierabarcrawl.com",  annualRevenue:12000000, estimatedGuests:50000,  internationalGuestsMixed:true, description:"Turar Côte d'Azur, svært internasjonale"},
+    {company:"Chateau de Versailles Tours",segment:"Museum",        nextSeasonStart:"heilars", country:"Île-de-France", website:"chateauversailles.fr", annualRevenue:200000000,estimatedGuests:8000000,internationalGuestsMixed:true, description:"Versailles slott, massivt internasjonalt besøk"},
+    {company:"Loire Valley Cycling",  segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"Loiredalen",    website:"loirecycling.com",     annualRevenue:11000000, estimatedGuests:15000,  internationalGuestsMixed:true, description:"Sykkelturar Loire, internasjonale grupper"},
+    // USA
+    {company:"Gray Line New York",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Mid-Atlantic",  website:"graylinenewyork.com",  annualRevenue:120000000,estimatedGuests:800000, internationalGuestsMixed:true, description:"Storbyturs New York, massivt internasjonalt"},
+    {company:"New England Cruise",    segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"New England",   website:"newenglandcruise.com", annualRevenue:35000000, estimatedGuests:50000,  internationalGuestsMixed:true, description:"Cruise New England-kysten"},
+    {company:"Glacier National Park Tours",segment:"Turoperatørar", nextSeasonStart:"sommer",  country:"Mountain West", website:"glacierparktours.com", annualRevenue:22000000, estimatedGuests:30000,  internationalGuestsMixed:true, description:"Naturturar Montana, internasjonale gjester"},
+    {company:"Alcatraz City Cruises", segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"Pacific Coast",  website:"alcatrazcruises.com",  annualRevenue:85000000, estimatedGuests:1400000,internationalGuestsMixed:true, description:"Alcatraz-ferje San Francisco, 60%+ internasjonale"},
+    {company:"Nashville City Tours",  segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Southeast USA",  website:"nashvillecitytours.com",annualRevenue:28000000,estimatedGuests:120000, internationalGuestsMixed:true, description:"Musikk og kultur Nashville"},
+    {company:"Grand Canyon Tours",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Mountain West",  website:"grandcanyontours.com", annualRevenue:65000000, estimatedGuests:200000, internationalGuestsMixed:true, description:"Grand Canyon dagsturer, svært internasjonalt"},
+    {company:"Everglades National Park",segment:"Naturopplevingar", nextSeasonStart:"vinter",  country:"Southeast USA",  website:"nps.gov/ever",         annualRevenue:45000000, estimatedGuests:800000, internationalGuestsMixed:true, description:"Nasjonalpark Florida, mange internasjonale"},
+    {company:"Chicago Architecture Center",segment:"Museum",        nextSeasonStart:"heilars", country:"Midwest USA",   website:"architecture.org",     annualRevenue:18000000, estimatedGuests:100000, internationalGuestsMixed:true, description:"Arkitekturturar Chicago, internasjonale designgjester"},          annualRevenue:35000000, estimatedGuests:800000,internationalGuestsMixed:true, description:"Kanalcruise Amsterdam"},
   
     // UK — 20 selskap for god dekning
     {company:"VisitBritain", region:"England",           segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"England",website:"visitbritain.com",      annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true,description:"Britisk nasjonal turistorganisasjon"},
@@ -398,17 +457,54 @@ function getDemoLeads(cfg) {
   ];
   if (!cfg?.geos?.length) return all;
   const GM={
+    // Skandinavia
     noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
-    danmark:["danmark","denmark"],finland:["finland"],
-    island:["island","iceland"],
-    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","northern ireland"],
+    danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
+    // UK regionar
+    uk:["uk","united kingdom","england","scotland","britain","wales","northern ireland","ireland"],
     skottland:["scotland","skottland"],
-    england:["england"],
+    "england-nord":["north england","yorkshire","lancashire","cumbria","newcastle","manchester","liverpool","nord-england"],
+    "england-sør":["south england","london","kent","essex","sussex","surrey","sør-england","southeast england","southwest england"],
     wales:["wales","cymru"],
-    irland:["ireland","eire","irland"],
-    nederland:["nederland","netherlands","holland"],
+    "nord-irland":["northern ireland","nord-irland"],
+    irland:["ireland","eire","republic of ireland","irland"],
+    // Frankrike
+    frankrike:["france","frankrike"],
+    "île-de-france":["paris","île-de-france","ile de france"],
+    normandie:["normandie","normandy"],
+    bretagne:["bretagne","brittany","breton"],
+    provence:["provence","côte d'azur","cote d'azur","marseille","nice"],
+    "alpane-fr":["alps","alpane","savoie","chamonix","grenoble"],
+    loiredalen:["loire","loiredalen","loire valley"],
+    alsace:["alsace","strasbourg","alsatian"],
+    // Tyskand
     tyskland:["germany","deutschland","tyskland"],
-    frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]
+    bayern:["bavaria","bayern","munich","münchen","bavarian"],
+    "nord-tyskland":["hamburg","bremen","schleswig","nord-tyskland","north germany"],
+    rheinland:["rhine","rheinland","cologne","köln","düsseldorf","bonn"],
+    "aust-tyskland":["saxony","sachsen","dresden","leipzig","aust-tyskland"],
+    berlin:["berlin"],
+    // USA
+    usa:["usa","united states","america","us"],
+    "new england":["new england","maine","vermont","new hampshire","massachusetts","rhode island","connecticut"],
+    "mid-atlantic":["new york","new jersey","pennsylvania","maryland","delaware","virginia","dc","washington"],
+    "southeast usa":["florida","georgia","south carolina","north carolina","tennessee","alabama","mississippi","louisiana"],
+    "midwest usa":["ohio","michigan","indiana","illinois","wisconsin","minnesota","iowa","missouri"],
+    "mountain west":["colorado","utah","wyoming","montana","idaho","nevada","arizona","new mexico"],
+    "pacific coast":["california","oregon","washington state","los angeles","san francisco","seattle","portland"],
+    "texas gulf":["texas","houston","dallas","austin","louisiana","gulf coast"],
+    "alaska hawaii":["alaska","hawaii","hawaiian"],
+    // Andre
+    nederland:["nederland","netherlands","holland"],
+    belgia:["belgium","belgia","belgique"],
+    sveits:["switzerland","sveits","schweiz","suisse"],
+    austerrike:["austria","austerrike","österreich"],
+    italia:["italy","italia"],
+    spania:["spain","spania","españa"],
+    canada:["canada","canadian"],
+    australia:["australia","australian"],
+    "new zealand":["new zealand","aotearoa"],
+    japan:["japan","japanese"]
   };
   const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
   const f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
@@ -428,6 +524,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.2 — " + new Date().toISOString().split("T")[0]
+  version: "v10.3 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

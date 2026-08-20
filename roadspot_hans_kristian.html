@@ -208,20 +208,84 @@ textarea{min-height:80px;resize:vertical}
   <div class="card">
     <div class="stit">🌍 Geografi</div>
     <div class="sr"><div><div class="sl">Land</div><div class="sd">Klikk for å aktivere</div></div>
-      <div id="geo-tags">
-        <span class="tag on" data-v="Noreg" onclick="toggleTag(this)">🇳🇴 Noreg</span>
-        <span class="tag on" data-v="Sverige" onclick="toggleTag(this)">🇸🇪 Sverige</span>
-        <span class="tag on" data-v="Danmark" onclick="toggleTag(this)">🇩🇰 Danmark</span>
-        <span class="tag" data-v="Finland" onclick="toggleTag(this)">🇫🇮 Finland</span>
-        <span class="tag" data-v="Island" onclick="toggleTag(this)">🇮🇸 Island</span>
-        <span class="tag" data-v="UK" onclick="toggleTag(this)">🇬🇧 Heile UK</span>
-        <span class="tag" data-v="Skottland" onclick="toggleTag(this)">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Skottland</span>
-        <span class="tag" data-v="England" onclick="toggleTag(this)">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</span>
-        <span class="tag" data-v="Wales" onclick="toggleTag(this)">🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales</span>
-        <span class="tag" data-v="Irland" onclick="toggleTag(this)">🇮🇪 Irland</span>
-        <span class="tag" data-v="Nederland" onclick="toggleTag(this)">🇳🇱 NL</span>
-        <span class="tag" data-v="Tyskland" onclick="toggleTag(this)">🇩🇪 DE</span>
-      </div>
+      <div id="geo-tags" style="display:flex;flex-direction:column;gap:8px">
+
+  <!-- SKANDINAVIA -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px">SKANDINAVIA</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+    <span class="tag on" data-v="Noreg" onclick="toggleTag(this)">🇳🇴 Noreg</span>
+    <span class="tag on" data-v="Sverige" onclick="toggleTag(this)">🇸🇪 Sverige</span>
+    <span class="tag on" data-v="Danmark" onclick="toggleTag(this)">🇩🇰 Danmark</span>
+    <span class="tag" data-v="Finland" onclick="toggleTag(this)">🇫🇮 Finland</span>
+    <span class="tag" data-v="Island" onclick="toggleTag(this)">🇮🇸 Island</span>
+  </div>
+
+  <!-- UK & IRLAND -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px;margin-top:4px">STORBRITANNIA & IRLAND</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+    <span class="tag" data-v="UK" onclick="toggleTag(this)">🇬🇧 Heile UK</span>
+    <span class="tag" data-v="Skottland" onclick="toggleTag(this)">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Skottland</span>
+    <span class="tag" data-v="England-Nord" onclick="toggleTag(this)">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Nord-England</span>
+    <span class="tag" data-v="England-Sør" onclick="toggleTag(this)">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Sør-England</span>
+    <span class="tag" data-v="Wales" onclick="toggleTag(this)">🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales</span>
+    <span class="tag" data-v="Nord-Irland" onclick="toggleTag(this)">🇬🇧 Nord-Irland</span>
+    <span class="tag" data-v="Irland" onclick="toggleTag(this)">🇮🇪 Irland</span>
+  </div>
+
+  <!-- FRANKRIKE -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px;margin-top:4px">FRANKRIKE</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+    <span class="tag" data-v="Frankrike" onclick="toggleTag(this)">🇫🇷 Heile Frankrike</span>
+    <span class="tag" data-v="Île-de-France" onclick="toggleTag(this)">🗼 Île-de-France/Paris</span>
+    <span class="tag" data-v="Normandie" onclick="toggleTag(this)">⚓ Normandie</span>
+    <span class="tag" data-v="Bretagne" onclick="toggleTag(this)">🌊 Bretagne</span>
+    <span class="tag" data-v="Provence" onclick="toggleTag(this)">☀️ Provence/Côte d'Azur</span>
+    <span class="tag" data-v="Alpane-FR" onclick="toggleTag(this)">🏔️ Alpane</span>
+    <span class="tag" data-v="Loiredalen" onclick="toggleTag(this)">🏰 Loiredalen</span>
+    <span class="tag" data-v="Alsace" onclick="toggleTag(this)">🍷 Alsace</span>
+  </div>
+
+  <!-- TYSKLAND -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px;margin-top:4px">TYSKLAND</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+    <span class="tag" data-v="Tyskland" onclick="toggleTag(this)">🇩🇪 Heile Tyskland</span>
+    <span class="tag" data-v="Bayern" onclick="toggleTag(this)">🏔️ Bayern</span>
+    <span class="tag" data-v="Nord-Tyskland" onclick="toggleTag(this)">⚓ Nord-Tyskland</span>
+    <span class="tag" data-v="Rheinland" onclick="toggleTag(this)">🍷 Rheinland</span>
+    <span class="tag" data-v="Aust-Tyskland" onclick="toggleTag(this)">🎭 Aust-Tyskland</span>
+    <span class="tag" data-v="Berlin" onclick="toggleTag(this)">🏙️ Berlin</span>
+  </div>
+
+  <!-- USA -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px;margin-top:4px">USA</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+    <span class="tag" data-v="USA" onclick="toggleTag(this)">🇺🇸 Heile USA</span>
+    <span class="tag" data-v="New England" onclick="toggleTag(this)">🍂 New England</span>
+    <span class="tag" data-v="Mid-Atlantic" onclick="toggleTag(this)">🗽 Mid-Atlantic</span>
+    <span class="tag" data-v="Southeast USA" onclick="toggleTag(this)">🌴 Southeast</span>
+    <span class="tag" data-v="Midwest USA" onclick="toggleTag(this)">🌽 Midwest</span>
+    <span class="tag" data-v="Mountain West" onclick="toggleTag(this)">🏔️ Mountain West</span>
+    <span class="tag" data-v="Pacific Coast" onclick="toggleTag(this)">🌊 Pacific Coast</span>
+    <span class="tag" data-v="Texas Gulf" onclick="toggleTag(this)">🤠 Texas/Gulf</span>
+    <span class="tag" data-v="Alaska Hawaii" onclick="toggleTag(this)">🌺 Alaska/Hawaii</span>
+  </div>
+
+  <!-- RESTEN -->
+  <div style="font-size:11px;font-weight:600;color:#888;margin-bottom:2px;margin-top:4px">ANDRE</div>
+  <div style="display:flex;flex-wrap:wrap;gap:4px">
+    <span class="tag" data-v="Nederland" onclick="toggleTag(this)">🇳🇱 Nederland</span>
+    <span class="tag" data-v="Belgia" onclick="toggleTag(this)">🇧🇪 Belgia</span>
+    <span class="tag" data-v="Sveits" onclick="toggleTag(this)">🇨🇭 Sveits</span>
+    <span class="tag" data-v="Austerrike" onclick="toggleTag(this)">🇦🇹 Austerrike</span>
+    <span class="tag" data-v="Italia" onclick="toggleTag(this)">🇮🇹 Italia</span>
+    <span class="tag" data-v="Spania" onclick="toggleTag(this)">🇪🇸 Spania</span>
+    <span class="tag" data-v="Canada" onclick="toggleTag(this)">🇨🇦 Canada</span>
+    <span class="tag" data-v="Australia" onclick="toggleTag(this)">🇦🇺 Australia</span>
+    <span class="tag" data-v="New Zealand" onclick="toggleTag(this)">🇳🇿 New Zealand</span>
+    <span class="tag" data-v="Japan" onclick="toggleTag(this)">🇯🇵 Japan</span>
+  </div>
+
+</div>
     </div>
   </div>
   <div class="card">

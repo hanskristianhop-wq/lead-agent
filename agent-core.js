@@ -249,7 +249,19 @@ KUN JSON array: [{"company":"","website":"","segment":"","season":"","nextSeason
     if (!m) throw new Error("ingen JSON");
     const companies = JSON.parse(m[0]).filter(c=>c.company&&c.website);
     // Geo-filter
-    const GM={noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],uk:["uk","united kingdom","england","scotland","britain","wales"],nederland:["nederland","netherlands"],tyskland:["germany","deutschland","tyskland"],frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]};
+    const GM={
+    noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
+    danmark:["danmark","denmark"],finland:["finland"],
+    island:["island","iceland"],
+    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","northern ireland"],
+    skottland:["scotland","skottland"],
+    england:["england"],
+    wales:["wales","cymru"],
+    irland:["ireland","eire","irland"],
+    nederland:["nederland","netherlands","holland"],
+    tyskland:["germany","deutschland","tyskland"],
+    frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]
+  };
     const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
     const filtered=companies.filter(c=>{const cc=(c.country||"").toLowerCase(); return !cc||[...ok].some(a=>cc.includes(a));});
     return filtered.length>0 ? filtered : companies;
@@ -356,36 +368,48 @@ function getDemoLeads(cfg) {
     {company:"Santa Claus Village",   segment:"Turoperatørar",      nextSeasonStart:"vinter",  country:"Finland",website:"santaclausvillage.info",annualRevenue:60000000,estimatedGuests:50000, internationalGuestsMixed:true, description:"Julenisse-attraksjon Rovaniemi"},
     {company:"Visit Iceland",         segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"Island", website:"visitreykjavik.is",     annualRevenue:120000000,estimatedGuests:100000,internationalGuestsMixed:true, description:"Reykjavik turistorganisasjon"},
     {company:"Arctic Adventures IS",  segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Island", website:"adventures.is",         annualRevenue:35000000, estimatedGuests:40000, internationalGuestsMixed:true, description:"Naturturar Island"},
-    {company:"Rabbies Trail Burners", segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",     website:"rabbies.com",           annualRevenue:45000000, estimatedGuests:25000, internationalGuestsMixed:true, description:"Smågruppe turar Skottland"},
+    {company:"Rabbies Trail Burners", segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"Skottland",     website:"rabbies.com",           annualRevenue:45000000, estimatedGuests:25000, internationalGuestsMixed:true, description:"Smågruppe turar Skottland"},
     {company:"Visit Scotland",        segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"UK",     website:"visitscotland.com",     annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true, description:"Skottlands turistorganisasjon"},
     {company:"Caledonian MacBrayne",  segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",     website:"calmac.co.uk",          annualRevenue:180000000,estimatedGuests:200000,internationalGuestsMixed:true, description:"Ferjeselskap Skottland"},
     {company:"National Trust Scotland",segment:"Museum",            nextSeasonStart:"heilars", country:"UK",     website:"nts.org.uk",            annualRevenue:95000000, estimatedGuests:300000,internationalGuestsMixed:true, description:"Historiske attraksjonar Skottland"},
     {company:"Rederij Lovers",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Nederland",website:"lovers.nl",          annualRevenue:35000000, estimatedGuests:800000,internationalGuestsMixed:true, description:"Kanalcruise Amsterdam"},
   
     // UK — 20 selskap for god dekning
-    {company:"VisitBritain",           segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"UK",website:"visitbritain.com",      annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true,description:"Britisk nasjonal turistorganisasjon"},
-    {company:"Loch Ness by Jacobite",  segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",website:"jacobite.co.uk",        annualRevenue:18000000,estimatedGuests:80000,internationalGuestsMixed:true,description:"Cruiseturar på Loch Ness, svært internasjonalt"},
-    {company:"Mersey Ferries",         segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"UK",website:"merseyferries.co.uk",   annualRevenue:25000000,estimatedGuests:200000,internationalGuestsMixed:true,description:"Ferjetur Liverpool, Beatles-turistar frå heile verda"},
-    {company:"Historic Environment Scotland",segment:"Museum",       nextSeasonStart:"heilars", country:"UK",website:"historicenvironment.scot",annualRevenue:150000000,estimatedGuests:1000000,internationalGuestsMixed:true,description:"Edinborg slott, Stirling slott"},
-    {company:"Highlands Unbounded",    segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"highlandsunbounded.com", annualRevenue:11000000,estimatedGuests:8000,internationalGuestsMixed:true,description:"Luksuriøse Highland-turar"},
-    {company:"Orkney Ferries",         segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",website:"orkneyferries.co.uk",   annualRevenue:22000000,estimatedGuests:150000,internationalGuestsMixed:true,description:"Ferjeselskap Orkney"},
-    {company:"Stonehenge Tours",       segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"UK",website:"stonehengetours.com",   annualRevenue:28000000,estimatedGuests:120000,internationalGuestsMixed:true,description:"Guidede turar til Stonehenge, 90%+ internasjonale"},
-    {company:"Edinburgh Bus Tours",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"UK",website:"edinburghbustours.com", annualRevenue:32000000,estimatedGuests:250000,internationalGuestsMixed:true,description:"Hop-on hop-off Edinburgh"},
-    {company:"Windermere Lake Cruises",segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",website:"windermere-lakecruises.co.uk",annualRevenue:14000000,estimatedGuests:100000,internationalGuestsMixed:true,description:"Sjøcruise Lake District"},
-    {company:"Visit Wales",            segment:"Destinasjonsselskap",nextSeasonStart:"sommer",  country:"UK",website:"visitwales.com",        annualRevenue:80000000,estimatedGuests:400000,internationalGuestsMixed:true,description:"Wales turistorganisasjon"},
-    {company:"Trossachs Trundler",     segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"trossachstrundler.com", annualRevenue:10500000,estimatedGuests:12000,internationalGuestsMixed:true,description:"Bussturar Trossachs nasjonalpark"},
-    {company:"Contiki UK",             segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"contiki.com",           annualRevenue:200000000,estimatedGuests:150000,internationalGuestsMixed:true,description:"Ungdomsturar Europa"},
-    {company:"Brightwater Holidays",   segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"brightwaterholidays.com",annualRevenue:15000000,estimatedGuests:10000,internationalGuestsMixed:true,description:"Spesialturar UK og Europa"},
-    {company:"Shearings Group",        segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"shearings.com",         annualRevenue:120000000,estimatedGuests:80000,internationalGuestsMixed:false,description:"Storgruppe bussturar Storbritannia"},
-    {company:"National Museum Scotland",segment:"Museum",            nextSeasonStart:"heilars", country:"UK",website:"nms.ac.uk",             annualRevenue:65000000,estimatedGuests:2500000,internationalGuestsMixed:true,description:"Nasjonalmuseum Edinburgh, massivt internasjonalt"},
-    {company:"Scottish Canals",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",website:"scottishcanals.co.uk",  annualRevenue:20000000,estimatedGuests:50000,internationalGuestsMixed:true,description:"Kanalturar Skottland"},
-    {company:"Heart of England Tours", segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"UK",website:"heartofenglandtours.co.uk",annualRevenue:12000000,estimatedGuests:20000,internationalGuestsMixed:true,description:"Englands hjarte — Shakespeare, Cotswolds"},
-    {company:"City Sightseeing UK",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"UK",website:"city-sightseeing.com",  annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true,description:"Hop-on hop-off over heile UK"},
-    {company:"Loch Lomond & Trossachs",segment:"Destinasjonsselskap",nextSeasonStart:"sommer",  country:"UK",website:"lochlomond-trossachs.org",annualRevenue:45000000,estimatedGuests:4000000,internationalGuestsMixed:true,description:"Nasjonalpark, massivt besøk"},
-    {company:"P&O Ferries UK",         segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"UK",website:"poferries.com",         annualRevenue:900000000,estimatedGuests:8000000,internationalGuestsMixed:true,description:"Storferje UK-Europa, svært internasjonalt"},
+    {company:"VisitBritain", region:"England",           segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"England",website:"visitbritain.com",      annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true,description:"Britisk nasjonal turistorganisasjon"},
+    {company:"Loch Ness by Jacobite", region:"Skottland",  segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Skottland",website:"jacobite.co.uk",        annualRevenue:18000000,estimatedGuests:80000,internationalGuestsMixed:true,description:"Cruiseturar på Loch Ness, svært internasjonalt"},
+    {company:"Mersey Ferries", region:"England",         segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"England",website:"merseyferries.co.uk",   annualRevenue:25000000,estimatedGuests:200000,internationalGuestsMixed:true,description:"Ferjetur Liverpool, Beatles-turistar frå heile verda"},
+    {company:"Historic Environment Scotland", region:"Skottland",segment:"Museum",       nextSeasonStart:"heilars", country:"Skottland",website:"historicenvironment.scot",annualRevenue:150000000,estimatedGuests:1000000,internationalGuestsMixed:true,description:"Edinborg slott, Stirling slott"},
+    {company:"Highlands Unbounded", region:"Skottland",    segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"Skottland",website:"highlandsunbounded.com", annualRevenue:11000000,estimatedGuests:8000,internationalGuestsMixed:true,description:"Luksuriøse Highland-turar"},
+    {company:"Orkney Ferries", region:"Skottland",         segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Skottland",website:"orkneyferries.co.uk",   annualRevenue:22000000,estimatedGuests:150000,internationalGuestsMixed:true,description:"Ferjeselskap Orkney"},
+    {company:"Stonehenge Tours", region:"England",       segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"England",website:"stonehengetours.com",   annualRevenue:28000000,estimatedGuests:120000,internationalGuestsMixed:true,description:"Guidede turar til Stonehenge, 90%+ internasjonale"},
+    {company:"Edinburgh Bus Tours", region:"Skottland",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Skottland",website:"edinburghbustours.com", annualRevenue:32000000,estimatedGuests:250000,internationalGuestsMixed:true,description:"Hop-on hop-off Edinburgh"},
+    {company:"Windermere Lake Cruises", region:"England",segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"England",website:"windermere-lakecruises.co.uk",annualRevenue:14000000,estimatedGuests:100000,internationalGuestsMixed:true,description:"Sjøcruise Lake District"},
+    {company:"Visit Wales", region:"Wales",            segment:"Destinasjonsselskap",nextSeasonStart:"sommer",  country:"Wales",website:"visitwales.com",        annualRevenue:80000000,estimatedGuests:400000,internationalGuestsMixed:true,description:"Wales turistorganisasjon"},
+    {company:"Trossachs Trundler", region:"Skottland",     segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"Skottland",website:"trossachstrundler.com", annualRevenue:10500000,estimatedGuests:12000,internationalGuestsMixed:true,description:"Bussturar Trossachs nasjonalpark"},
+    {company:"Contiki UK", region:"England",             segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"England",website:"contiki.com",           annualRevenue:200000000,estimatedGuests:150000,internationalGuestsMixed:true,description:"Ungdomsturar Europa"},
+    {company:"Brightwater Holidays", region:"Skottland",   segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"Skottland",website:"brightwaterholidays.com",annualRevenue:15000000,estimatedGuests:10000,internationalGuestsMixed:true,description:"Spesialturar UK og Europa"},
+    {company:"Shearings Group", region:"England",        segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"England",website:"shearings.com",         annualRevenue:120000000,estimatedGuests:80000,internationalGuestsMixed:false,description:"Storgruppe bussturar Storbritannia"},
+    {company:"National Museum Scotland", region:"Skottland",segment:"Museum",            nextSeasonStart:"heilars", country:"Skottland",website:"nms.ac.uk",             annualRevenue:65000000,estimatedGuests:2500000,internationalGuestsMixed:true,description:"Nasjonalmuseum Edinburgh, massivt internasjonalt"},
+    {company:"Scottish Canals", region:"Skottland",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Skottland",website:"scottishcanals.co.uk",  annualRevenue:20000000,estimatedGuests:50000,internationalGuestsMixed:true,description:"Kanalturar Skottland"},
+    {company:"Heart of England Tours", region:"England", segment:"Turoperatørar",      nextSeasonStart:"sommer",  country:"England",website:"heartofenglandtours.co.uk",annualRevenue:12000000,estimatedGuests:20000,internationalGuestsMixed:true,description:"Englands hjarte — Shakespeare, Cotswolds"},
+    {company:"City Sightseeing UK", region:"England",    segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"England",website:"city-sightseeing.com",  annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true,description:"Hop-on hop-off over heile UK"},
+    {company:"Loch Lomond & Trossachs", region:"Skottland",segment:"Destinasjonsselskap",nextSeasonStart:"sommer",  country:"Skottland",website:"lochlomond-trossachs.org",annualRevenue:45000000,estimatedGuests:4000000,internationalGuestsMixed:true,description:"Nasjonalpark, massivt besøk"},
+    {company:"P&O Ferries UK", region:"England",         segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"England",website:"poferries.com",         annualRevenue:900000000,estimatedGuests:8000000,internationalGuestsMixed:true,description:"Storferje UK-Europa, svært internasjonalt"},
   ];
   if (!cfg?.geos?.length) return all;
-  const GM={noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],uk:["uk","united kingdom","england","scotland","britain","wales"],nederland:["nederland","netherlands"],tyskland:["germany","deutschland","tyskland"],frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]};
+  const GM={
+    noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
+    danmark:["danmark","denmark"],finland:["finland"],
+    island:["island","iceland"],
+    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","northern ireland"],
+    skottland:["scotland","skottland"],
+    england:["england"],
+    wales:["wales","cymru"],
+    irland:["ireland","eire","irland"],
+    nederland:["nederland","netherlands","holland"],
+    tyskland:["germany","deutschland","tyskland"],
+    frankrike:["france","frankrike"],spania:["spain","spania"],italia:["italy","italia"]
+  };
   const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
   const f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
   return f.length>0 ? f : all;
@@ -404,6 +428,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.1 — " + new Date().toISOString().split("T")[0]
+  version: "v10.2 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

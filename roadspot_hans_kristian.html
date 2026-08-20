@@ -280,60 +280,23 @@ const CORE_URL = "https://raw.githubusercontent.com/hanskristianhop-wq/lead-agen
 let RS = null, allLeads = [], logs = [], activeFilt = "all", driveMemory = null;
 
 
-// ── DRIVE MINNE — inline, alltid tilgjengeleg ─────────────
-const DRIVE_MCP_URL = "https://drivemcp.googleapis.com/mcp/v1";
-const MEMORY_FILENAME = "roadspot_memory.json";
 
-async function driveCallRaw(systemPrompt, userMsg) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000); // 12 sek timeout
-  try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", signal: controller.signal,
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6", max_tokens: 2000,
-        system: systemPrompt,
-        messages: [{role: "user", content: userMsg}],
-        mcp_servers: [{type: "url", url: DRIVE_MCP_URL, name: "gdrive"}]
-      })
-    });
-    clearTimeout(timeout);
-    const d = await r.json();
-    return (d.content||[]).map(b =>
-      b.type==="text" ? b.text :
-      b.type==="mcp_tool_result" ? (b.content?.[0]?.text||"") : ""
-    ).join("");
-  } catch(e) {
-    clearTimeout(timeout);
-    console.warn("Drive kall feila/timeout:", e.message);
-    return "";
-  }
-}
+// ── MINNE — localStorage (alltid tilgjengeleg, ingen auth) ─
+const MEMORY_KEY = "rs_drive_memory"; // same key = shared if same browser
 
 async function loadMemory() {
   try {
-    const txt = await driveCallRaw(
-      `Google Drive. Søk etter fila "${MEMORY_FILENAME}". Om ho finst: last ned og returner innhaldet som rein JSON. Om ikkje: returner teksten NOTFOUND`,
-      `Finn og returner innhaldet av ${MEMORY_FILENAME}`
-    );
-    if (!txt || txt.includes("NOTFOUND") || txt.trim()==="") {
-      return {runs:[],companies:{},lastRun:null,totalLeads:0};
-    }
-    const m = txt.match(/\{[\s\S]*\}/);
-    if (m) return JSON.parse(m[0]);
-  } catch(e) { console.warn("loadMemory feil:", e.message); }
-  return {runs:[],companies:{},lastRun:null,totalLeads:0};
+    const raw = localStorage.getItem(MEMORY_KEY);
+    if (!raw) return {runs:[],companies:{},lastRun:null,totalLeads:0};
+    return JSON.parse(raw);
+  } catch(e) {
+    return {runs:[],companies:{},lastRun:null,totalLeads:0};
+  }
 }
 
 async function saveMemory(memory) {
   try {
-    const jsonStr = JSON.stringify(memory, null, 2);
-    await driveCallRaw(
-      `Google Drive. Søk etter "${MEMORY_FILENAME}". Om funnen: oppdater innhaldet. Om ikkje funnen: opprett fila. Svar berre OK.`,
-      `Oppdater ${MEMORY_FILENAME}:
-${jsonStr}`
-    );
+    localStorage.setItem(MEMORY_KEY, JSON.stringify(memory));
   } catch(e) { console.warn("saveMemory feil:", e.message); }
 }
 
@@ -349,6 +312,7 @@ function makeCompanyKey(lead) {
 function addToMemory(mem, lead, agentId, agentName) {
   const k = makeCompanyKey(lead);
   if (!k) return;
+  if (!mem.companies) mem.companies = {};
   mem.companies[k] = {
     company: lead.company, website: lead.website||"", country: lead.country||"",
     agent: agentId, agentName, hubspotId: lead.hubspotId||"",
@@ -364,6 +328,7 @@ function addRunToMemory(mem, run) {
   mem.lastRun = run.date;
   mem.totalLeads = (mem.totalLeads||0) + (run.newLeads||0);
 }
+
 
 // ── MEMORY UI ─────────────────────────────────────────────
 function updateMemoryUI() {

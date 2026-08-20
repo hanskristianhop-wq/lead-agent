@@ -285,21 +285,30 @@ const DRIVE_MCP_URL = "https://drivemcp.googleapis.com/mcp/v1";
 const MEMORY_FILENAME = "roadspot_memory.json";
 
 async function driveCallRaw(systemPrompt, userMsg) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6", max_tokens: 2000,
-      system: systemPrompt,
-      messages: [{role: "user", content: userMsg}],
-      mcp_servers: [{type: "url", url: DRIVE_MCP_URL, name: "gdrive"}]
-    })
-  });
-  const d = await r.json();
-  return (d.content||[]).map(b =>
-    b.type==="text" ? b.text :
-    b.type==="mcp_tool_result" ? (b.content?.[0]?.text||"") : ""
-  ).join("");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000); // 12 sek timeout
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", signal: controller.signal,
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6", max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{role: "user", content: userMsg}],
+        mcp_servers: [{type: "url", url: DRIVE_MCP_URL, name: "gdrive"}]
+      })
+    });
+    clearTimeout(timeout);
+    const d = await r.json();
+    return (d.content||[]).map(b =>
+      b.type==="text" ? b.text :
+      b.type==="mcp_tool_result" ? (b.content?.[0]?.text||"") : ""
+    ).join("");
+  } catch(e) {
+    clearTimeout(timeout);
+    console.warn("Drive kall feila/timeout:", e.message);
+    return "";
+  }
 }
 
 async function loadMemory() {

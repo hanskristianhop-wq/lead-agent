@@ -225,85 +225,122 @@ async function apiCall(system, user, mcpServers=[], tools=[]) {
 
 async function findCompaniesViaWeb(cfg) {
   const geoStr = cfg.geos.join(", ");
-  const seasonDesc = cfg.months==="vinter" ? "vinterturisme nordlys snø"
-    : cfg.months==="sommer" ? "sommarturisme fjord cruise"
-    : "heilårs attraksjonar museum cruise";
+  const season = cfg.months;
+
+  // Build segment description
+  const segMap = {
+    "Turoperatørar":      "tour operators, sightseeing companies, guided tours, excursion companies, experience providers",
+    "Båt/cruise":         "boat tours, river cruises, ferry operators, lake cruises, sightseeing boats, harbour cruises",
+    "Destinasjonsselskap":"destination management companies, tourism boards, visitor bureaus, convention bureaus",
+    "Museum":             "museums, heritage sites, historic attractions, visitor centres, cultural attractions",
+    "Buss":               "coach tour operators, hop-on hop-off bus tours, bus sightseeing",
+    "Tog":                "scenic railways, tourist trains, heritage railways, mountain railways",
+    "Kommunar":           "municipal tourism offices, city tourism departments",
+  };
+  const segDesc = cfg.segs.map(s => segMap[s] || s).join("; ");
+
+  // Season context for search
+  const seasonCtx = season === "vinter"
+    ? "winter tourism, ski resorts, Christmas markets, northern lights"
+    : season === "sommer"
+    ? "summer tourism, outdoor experiences, festivals, boat trips, hiking"
+    : "year-round tourism attractions, always open";
+
   try {
     const txt = await apiCall(
-      `Du er ein expert på turistbransjen. Søkeomraade: ${geoStr}.
-    
-    Viktig om regionar: Skottland = Scotland UK. England-Nord = North England/Yorkshire/Manchester/Liverpool. England-Sør = London/Southeast. Île-de-France = Paris-regionen. Bayern = Bavaria Germany. New England = Maine/Vermont/Massachusetts osv. Mid-Atlantic = New York/Pennsylvania. Pacific Coast = California/Oregon/Washington.
-    
-     Gjer MINST 6 ulike søk for å finne 20-25 relevante selskap:
-1. "best tour operators ${geoStr} TripAdvisor reviews"
-2. "cruise ferry ${geoStr} tourist international guests"
-3. "destination management company ${geoStr}"
-4. "museum visitor attraction ${geoStr} international tourists"
-5. "guided tours ${geoStr} Viator GetYourGuide"
-6. Reddit r/travel "${geoStr} tour company recommend"
+      `You are a professional tourism industry researcher. Your task is to find REAL, CURRENTLY OPERATING tourism companies in ${geoStr} that would benefit from multilingual audio guide technology.
 
-INKLUDER: cruise, ferje, kystruteskip, turoperatørar med grupper, destinasjonsselskap, museum/attraksjonar, gondol, turisttog, hop-on-hop-off bussar.
-EKSKLUDER: kajakk, klatring, rafting, fjellguide, overlevelsesturar.
-Min omsetning 10M NOK / £1M GBP. KRITISK: Returner KUN selskap som FAKTISK held til i ${geoStr}. Mål: 20-25 selskap.
-KUN JSON array: [{"company":"","website":"","segment":"","season":"","nextSeasonStart":"vinter","country":"","description":"","internationalGuestsMixed":false,"estimatedRevenueBand":"","estimatedGuests":0,"companySize":"","contact":"","title":"","email":"","annualRevenue":0}]`,
-      `Finn 20-25 turistselskap i ${geoStr.toUpperCase()} for RoadSpot. Sesong: ${seasonDesc}.`,
-      [], [{type:"web_search_20250305",name:"web_search"}]
+TARGET COMPANIES: ${segDesc}
+GEOGRAPHY: ${geoStr}
+SEASON FOCUS: ${seasonCtx}
+
+SEARCH STRATEGY - perform ALL of these searches:
+1. Search: "best tour operators ${geoStr} TripAdvisor 2024 2025" - find companies with many international reviews
+2. Search: "${geoStr} ${segDesc} international tourists" - find companies serving international guests  
+3. Search: "Viator ${geoStr} popular tours" - find top-rated operators on Viator
+4. Search: "GetYourGuide ${geoStr} top activities" - find operators on GYG
+5. Search: "${geoStr} tourism company multilingual guests reviews"
+6. Search: "Visit ${geoStr.split(',')[0]} official partners tourism operators"
+
+CRITICAL RULES:
+- Find 25 REAL, CURRENTLY OPERATING companies
+- ONLY companies in ${geoStr} - check this carefully
+- Priority: companies where international and local guests travel TOGETHER on same tours
+- Exclude: kayaking, rock climbing, rafting, mountain guiding, via ferrata, diving (safety-guide activities)
+- Minimum revenue: equivalent of 1M EUR / 10M NOK
+- Include: ALL types matching the target segments - there are thousands of such companies
+
+Return ONLY valid JSON array, no other text:
+[{
+  "company": "Company Name",
+  "website": "website.com",
+  "segment": "Turoperatørar",
+  "nextSeasonStart": "sommer",
+  "country": "Bayern",
+  "description": "What they do and WHY they need multilingual audio guides",
+  "internationalGuestsMixed": true,
+  "estimatedRevenueBand": "10-50M EUR",
+  "estimatedGuests": 50000,
+  "contact": "",
+  "title": "",
+  "email": "",
+  "annualRevenue": 0
+}]`,
+      `Find 25 real tourism companies in ${geoStr}. Segment: ${segDesc}. Season: ${seasonCtx}. Return ONLY JSON array.`,
+      [],
+      [{type: "web_search_20250305", name: "web_search"}]
     );
+
     const m = txt.match(/\[[\s\S]*\]/);
-    if (!m) throw new Error("ingen JSON");
-    const companies = JSON.parse(m[0]).filter(c=>c.company&&c.website);
-    // Geo-filter
-    const GM={
-        noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
-        danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
-        uk:["uk","united kingdom","england","scotland","britain","wales","ireland",
-            "skottland","irland","nord-irland"],
-        skottland:["scotland","skottland"],
-        england:["england"],
-        "england-nord":["north england","yorkshire","manchester","liverpool","nord-england"],
-        "england-sør":["london","south england","southeast","sør-england"],
-        wales:["wales","cymru"],
-        irland:["ireland","eire","irland"],
-        "nord-irland":["northern ireland","nord-irland"],
-        frankrike:["france","frankrike"],
-        "île-de-france":["paris","île-de-france","ile de france"],
-        normandie:["normandie","normandy"],
-        bretagne:["bretagne","brittany"],
-        provence:["provence","côte d'azur","nice"],
-        loiredalen:["loire","loiredalen"],
-        alsace:["alsace","strasbourg"],
-        "alpane-fr":["alps","alpane","savoie","chamonix"],
-        tyskland:["germany","deutschland","tyskland"],
-        bayern:["bavaria","bayern","münchen","munich"],
-        "nord-tyskland":["hamburg","bremen","nord-tyskland","north germany"],
-        rheinland:["rhine","rheinland","cologne","köln","düsseldorf"],
-        "aust-tyskland":["saxony","sachsen","dresden","leipzig","aust-tyskland"],
-        berlin:["berlin"],
-        nederland:["nederland","netherlands","holland"],
-        belgia:["belgium","belgia"],
-        sveits:["switzerland","sveits","schweiz"],
-        austerrike:["austria","austerrike","österreich"],
-        italia:["italy","italia"],
-        spania:["spain","spania","españa"],
-        usa:["usa","united states","us","america"],
-        "new england":["new england","maine","massachusetts","vermont","connecticut"],
-        "mid-atlantic":["new york","new jersey","pennsylvania","maryland","mid-atlantic"],
-        "southeast usa":["florida","georgia","tennessee","southeast usa"],
-        "midwest usa":["ohio","michigan","illinois","midwest usa"],
-        "mountain west":["colorado","utah","wyoming","montana","arizona","mountain west"],
-        "pacific coast":["california","oregon","washington state","los angeles","san francisco","pacific coast"],
-        "texas gulf":["texas","houston","dallas","texas gulf"],
-        "alaska hawaii":["alaska","hawaii"],
-        canada:["canada","canadian"],
-        australia:["australia","australian"],
-        "new zealand":["new zealand","aotearoa"],
-        japan:["japan","japanese"]
-      };
-    const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
-    const filtered=companies.filter(c=>{const cc=(c.country||"").toLowerCase(); return !cc||[...ok].some(a=>cc.includes(a));});
-    return filtered.length>0 ? filtered : companies;
-  } catch(e) { return []; }
+    if (!m) throw new Error("No JSON array found");
+    
+    let companies = JSON.parse(m[0]).filter(c => c.company && c.website);
+    
+    // Geo filter
+    const GM = {
+      noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
+      danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
+      uk:["uk","united kingdom","england","scotland","britain","wales","ireland","skottland","irland","nord-irland"],
+      skottland:["skottland","scotland"],england:["england"],
+      "england-nord":["nord-england","north england","yorkshire","manchester"],
+      "england-sør":["sør-england","south england","london"],
+      wales:["wales","cymru"],irland:["irland","ireland"],
+      "nord-irland":["nord-irland","northern ireland"],
+      frankrike:["frankrike","france","île-de-france","normandie","bretagne","provence","loiredalen","alsace","alpane-fr"],
+      "île-de-france":["île-de-france","paris"],"normandie":["normandie","normandy"],
+      "bretagne":["bretagne","brittany"],"provence":["provence","côte d'azur"],
+      "loiredalen":["loiredalen","loire"],"alsace":["alsace"],"alpane-fr":["alpane-fr","alps","savoie"],
+      tyskland:["tyskland","germany","deutschland","nord-tyskland","bayern","rheinland","aust-tyskland","berlin"],
+      bayern:["bayern","bavaria","münchen","munich"],
+      "nord-tyskland":["nord-tyskland","hamburg","bremen"],
+      rheinland:["rheinland","rhine","cologne","köln"],
+      "aust-tyskland":["aust-tyskland","saxony","dresden"],berlin:["berlin"],
+      nederland:["nederland","netherlands","holland"],belgia:["belgia","belgium"],
+      sveits:["sveits","switzerland"],austerrike:["austerrike","austria"],
+      italia:["italia","italy"],spania:["spania","spain"],
+      usa:["usa","united states","mid-atlantic","pacific coast","mountain west","new england","southeast usa","midwest usa","texas gulf","alaska hawaii"],
+      "mid-atlantic":["mid-atlantic"],"pacific coast":["pacific coast"],
+      "mountain west":["mountain west"],"new england":["new england"],
+      "southeast usa":["southeast usa"],"midwest usa":["midwest usa"],
+      "texas gulf":["texas gulf"],"alaska hawaii":["alaska hawaii"],
+      canada:["canada"],australia:["australia"],"new zealand":["new zealand"],japan:["japan"],
+    };
+    const ok = new Set();
+    cfg.geos.forEach(g => { (GM[g.toLowerCase()] || [g.toLowerCase()]).forEach(v => ok.add(v)); });
+    const filtered = companies.filter(c => {
+      const cc = (c.country||"").toLowerCase();
+      return !cc || [...ok].some(a => cc.includes(a));
+    });
+    
+    console.log(`Web search: found ${companies.length} companies, ${filtered.length} after geo filter`);
+    return filtered.length > 0 ? filtered : companies;
+    
+  } catch(e) {
+    console.warn("Web search failed:", e.message);
+    return [];
+  }
 }
+
 
 async function enrichWithApollo(companies) {
   for (let i=0; i<Math.min(companies.length,25); i++) {
@@ -361,31 +398,38 @@ async function findAndEnrichLeads(cfg) {
     }
   }
 
-  // Steg 1: Web-søk (Apollo-uavhengig)
-  try {
-    const webResults = await findCompaniesViaWeb(cfg);
-    if (webResults.length > 0) addUnique(webResults);
-  } catch(e) { console.warn("Web-søk feila:", e.message); }
+  // Step 1: Live web search — always run this first
+  console.log("Step 1: Web search for", cfg.geos.join(", "));
+  const webResults = await findCompaniesViaWeb(cfg);
+  if (webResults.length > 0) {
+    addUnique(webResults);
+    console.log(`Web search: ${companies.length} companies added`);
+  }
 
-  // Steg 2: Apollo-fallback om web-søk gir for lite
+  // Step 2: Apollo enrichment if web search got < 25
   if (companies.length < 25) {
+    console.log("Step 2: Apollo fallback");
     try {
       const apolloResults = await findViaApolloFallback(cfg);
-      if (apolloResults.length > 0) addUnique(apolloResults);
-    } catch(e) { console.warn("Apollo-fallback feila:", e.message); }
+      addUnique(apolloResults);
+    } catch(e) { console.warn("Apollo failed:", e.message); }
   }
 
-  // Steg 3: Demo-data som alltid fungerer (geo+sesong+segment-filtrert)
-  if (companies.length < 25) {
+  // Step 3: Demo data only as last resort (should rarely be needed)
+  if (companies.length < 5) {
+    console.log("Step 3: Using demo data (offline fallback)");
     addUnique(getDemoLeads(cfg));
+    // If still not enough, drop season filter
+    if (companies.length < 10) {
+      addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: cfg.segs}));
+    }
+    // Last resort: drop segment filter too
+    if (companies.length < 10) {
+      addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: []}));
+    }
   }
 
-  // Steg 4: Om framleis under 25 — bruk demo utan sesongfilter
-  if (companies.length < 10) {
-    addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: cfg.segs}));
-  }
-
-  // Steg 5: Apollo-berikking (kontaktinfo for dei utan e-post)
+  // Step 4: Apollo enrichment for contact info on top results
   const needsEnrich = companies.filter(c => !c.email || !c.contact).slice(0, 15);
   if (needsEnrich.length > 0) {
     await enrichWithApollo(needsEnrich);
@@ -393,6 +437,7 @@ async function findAndEnrichLeads(cfg) {
 
   return companies.slice(0, 25);
 }
+
 
 function buildApolloPrompt(cfg) { /* legacy */ return ""; }
 
@@ -686,6 +731,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.6 — " + new Date().toISOString().split("T")[0]
+  version: "v10.7 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

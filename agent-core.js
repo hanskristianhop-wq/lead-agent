@@ -455,6 +455,27 @@ function getDemoLeads(cfg) {
     {company:"Failte Ireland",             segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Irland",       website:"failteireland.ie",              annualRevenue:90000000, estimatedGuests:300000, internationalGuestsMixed:true},
     // NORD-IRLAND
     {company:"Tourism Northern Ireland",   segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Nord-Irland",  website:"tourismni.com",                 annualRevenue:40000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    // TYSKLAND - TUROPERATØRAR (utvida)
+    {company:"Bayerische Zugspitzbahn",    segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Bayern",       website:"zugspitze.de",                  annualRevenue:45000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Romantic Road Coach",        segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"romanticroadcoach.de",           annualRevenue:22000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Munich City Tours",          segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Bayern",       website:"munichinformation.de",           annualRevenue:18000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"Neuschwanstein Tours",       segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"neuschwanstein.de",              annualRevenue:35000000, estimatedGuests:300000, internationalGuestsMixed:true},
+    {company:"Hamburg Hafen Rundfahrt",    segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nord-Tyskland",website:"hamburg.de/hafenrundfahrt",      annualRevenue:25000000, estimatedGuests:400000, internationalGuestsMixed:true},
+    {company:"Reederei Cassen Eils",       segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nord-Tyskland",website:"cassen-eils.de",                 annualRevenue:18000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Berlin City Tour",           segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Berlin",       website:"berlincitytour.de",              annualRevenue:25000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Spree River Cruise Berlin",  segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Berlin",       website:"stern-und-kreis.de",             annualRevenue:20000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"KD Rhine Cruise",            segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Rheinland",    website:"k-d.com",                        annualRevenue:35000000, estimatedGuests:300000, internationalGuestsMixed:true},
+    {company:"Cologne Cathedral Tours",    segment:"Museum",              nextSeasonStart:"heilars",country:"Rheinland",    website:"koelner-dom.de",                 annualRevenue:15000000, estimatedGuests:500000, internationalGuestsMixed:true},
+    {company:"Loreley Cruises",            segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Rheinland",    website:"loreley-tourist.de",             annualRevenue:14000000, estimatedGuests:60000,  internationalGuestsMixed:true},
+    {company:"Dresden Dampfschifffahrt",   segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Aust-Tyskland",website:"saechsische-dampfschifffahrt.de",annualRevenue:22000000, estimatedGuests:180000, internationalGuestsMixed:true},
+    {company:"Leipzig City Tour",          segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Aust-Tyskland",website:"leipzig.travel",                 annualRevenue:12000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Zugspitze Winter Tours",     segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Bayern",       website:"zugspitze-winter.de",            annualRevenue:30000000, estimatedGuests:120000, internationalGuestsMixed:true},
+    {company:"Füssen Königsschlösser",     segment:"Museum",              nextSeasonStart:"heilars",country:"Bayern",       website:"fuessen.de",                     annualRevenue:40000000, estimatedGuests:1500000,internationalGuestsMixed:true},
+    {company:"Schwarzwald Tourismus",      segment:"Destinasjonsselskap", nextSeasonStart:"sommer", country:"Tyskland",     website:"schwarzwald-tourismus.info",     annualRevenue:30000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    {company:"Mosel Schifffahrt",          segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Rheinland",    website:"moselschifffahrt.de",            annualRevenue:16000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Deutsche Bahn Sightseeing",  segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Tyskland",     website:"bahn.de/sightseeing",            annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true},
+    {company:"Heidelberg Castle Tours",    segment:"Museum",              nextSeasonStart:"sommer", country:"Tyskland",     website:"schloss-heidelberg.de",          annualRevenue:25000000, estimatedGuests:1000000,internationalGuestsMixed:true},
+    {company:"Rhine Valley Bike Tours",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Rheinland",    website:"rhinevalley-biketours.com",      annualRevenue:12000000, estimatedGuests:15000,  internationalGuestsMixed:true},
     // NEDERLAND
     {company:"Rederij Lovers",             segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nederland",    website:"lovers.nl",                     annualRevenue:35000000, estimatedGuests:800000, internationalGuestsMixed:true},
     {company:"Keukenhof Gardens",          segment:"Museum",              nextSeasonStart:"sommer", country:"Nederland",    website:"keukenhof.nl",                  annualRevenue:45000000, estimatedGuests:1500000,internationalGuestsMixed:true},
@@ -622,11 +643,30 @@ function getDemoLeads(cfg) {
     if (ws.length >= 3) f = ws;
   }
 
+  // Segment-filter — berre bruk om det gir nok resultat
   if (cfg.segs && cfg.segs.length > 0) {
     const ws = f.filter(c => cfg.segs.some(s =>
       (c.segment||"").toLowerCase().includes(s.toLowerCase().split("/")[0])
     ));
-    if (ws.length >= 3) f = ws;
+    // Berre filtrer på segment om det gir minst 8 treff
+    if (ws.length >= 8) f = ws;
+    // Mellom 3-7: berik med resten (geo+sesong utan segmentfilter)
+    else if (ws.length >= 3) {
+      const extra = f.filter(c => !ws.includes(c));
+      f = [...ws, ...extra];
+    }
+    // Under 3: ignorer segmentfilter — vis alle geo+sesong-treff
+  }
+
+  // Garantert minimum: om framleis for få, ta alle frå same geo utan sesongfilter
+  if (f.length < 10 && cfg.geos?.length > 0) {
+    const ok2 = new Set();
+    cfg.geos.forEach(g => { (GM[g.toLowerCase()] || [g.toLowerCase()]).forEach(v => ok2.add(v)); });
+    const geoOnly = all.filter(c => [...ok2].some(a => (c.country||"").toLowerCase().includes(a)));
+    const seen = new Set(f.map(c => c.company));
+    for (const c of geoOnly) {
+      if (!seen.has(c.company)) { f.push(c); seen.add(c.company); }
+    }
   }
 
   return f;
@@ -646,6 +686,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.4 — " + new Date().toISOString().split("T")[0]
+  version: "v10.6 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

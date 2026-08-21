@@ -967,6 +967,7 @@ ${cfg.sig}`}]
         else { hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
       } else { l.hubspotId = "HS-"+rnd(); hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
     } catch(e) { l.hubspotId = "HS-"+rnd(); hsNew++; RS.claimCompany(l.company, l.website, MY_ID, l.hubspotId); }
+    }
   }
   stepUI("hubspot","done"); logMsg(`HubSpot: ${hsNew} nye · ${hsDup} duplikat`);
   document.getElementById("m-hs").textContent = hsNew; prog(82);

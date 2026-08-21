@@ -528,7 +528,35 @@ function getDemoLeads(cfg) {
     // JAPAN
     {company:"Hato Bus Tokyo",             segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Japan",        website:"hatobus.com",                   annualRevenue:85000000, estimatedGuests:500000, internationalGuestsMixed:true},
     {company:"Kyoto Walk Tours",           segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Japan",        website:"kyotowalk.com",                 annualRevenue:20000000, estimatedGuests:100000, internationalGuestsMixed:true},
-  ];
+
+    // SVERIGE (manglande)
+    {company:"Stockholm Sightseeing",      segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Sverige",      website:"stromma.com",                   annualRevenue:45000000, estimatedGuests:300000, internationalGuestsMixed:true},
+    // ENGLAND-NORD (eige country-felt)
+    {company:"York City Sightseeing",      segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Nord-England", website:"yorkpass.com",                  annualRevenue:20000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"Lake District Cruises",      segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nord-England", website:"lakedistrict.gov.uk",           annualRevenue:15000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    // ENGLAND-SØR (eige country-felt)
+    {company:"Thames River Sightseeing",   segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Sør-England",  website:"thamesclippers.com",            annualRevenue:55000000, estimatedGuests:400000, internationalGuestsMixed:true},
+    {company:"London Eye River Cruise",    segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Sør-England",  website:"londoneye.com",                 annualRevenue:85000000, estimatedGuests:600000, internationalGuestsMixed:true},
+    // WALES (manglande)
+    {company:"Snowdonia National Park Tours",segment:"Turoperatørar",     nextSeasonStart:"sommer", country:"Wales",        website:"snowdonia.gov.wales",           annualRevenue:18000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    // FRANKRIKE REGIONAR (manglande)
+    {company:"Normandie Tourisme",         segment:"Destinasjonsselskap", nextSeasonStart:"sommer", country:"Normandie",    website:"normandie-tourisme.fr",         annualRevenue:30000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    {company:"Provence Tourisme Office",   segment:"Destinasjonsselskap", nextSeasonStart:"sommer", country:"Provence",     website:"myprovence.fr",                 annualRevenue:35000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"Chamonix Mont-Blanc Tours",  segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Alpane-FR",    website:"chamonix-mont-blanc.com",       annualRevenue:40000000, estimatedGuests:120000, internationalGuestsMixed:true},
+    {company:"Chateaux Loire Valley",      segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Loiredalen",   website:"loirechateaux.com",             annualRevenue:15000000, estimatedGuests:50000,  internationalGuestsMixed:true},
+    {company:"Alsace Wine Route Tours",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Alsace",       website:"alsace-wines.com",              annualRevenue:12000000, estimatedGuests:40000,  internationalGuestsMixed:true},
+    // TYSKLAND REGIONAR (manglande)
+    {company:"Mosel River Cruises",        segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Rheinland",    website:"moselcruises.de",               annualRevenue:20000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Dresden City Tours",         segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Aust-Tyskland",website:"dresden.de/tourismus",          annualRevenue:18000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    // USA (manglande regionar)
+    {company:"New England Aquarium",       segment:"Museum",              nextSeasonStart:"heilars",country:"New England",  website:"neaq.org",                      annualRevenue:25000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Hawaii Dolphin Tours",       segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Alaska Hawaii",website:"dolphintours.com",              annualRevenue:18000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    // ANDRE (manglande)
+    {company:"Bruges Boat Tours",          segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Belgia",       website:"brugesboattours.com",           annualRevenue:12000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    {company:"Lake Lucerne Navigation",    segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Sveits",       website:"lakelucerne.ch",                annualRevenue:35000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Salzburg Sightseeing Tours", segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Austerrike",   website:"salzburg.info/tourismus",       annualRevenue:22000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"Niagara Falls Tours Canada", segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Canada",       website:"niagarafalls.com",              annualRevenue:55000000, estimatedGuests:400000, internationalGuestsMixed:true},
+    ];
 
   if (!cfg?.geos?.length) return all;
 
@@ -542,8 +570,9 @@ function getDemoLeads(cfg) {
         "skottland","irland","nord-irland"],
     skottland:["skottland","scotland"],
     england:["england"],
-    "england-nord":["nord-england","north england","yorkshire","manchester","liverpool","newcastle"],
-    "england-sør":["sør-england","south england","london","southeast"],
+    "england-nord":["nord-england","north england","yorkshire","manchester","liverpool","newcastle","nord-england"],
+    "england-sør":["sør-england","south england","london","southeast","sør-england"],
+    "england-sør":["sør-england","south england"],
     wales:["wales","cymru"],
     irland:["irland","ireland","eire"],
     "nord-irland":["nord-irland","northern ireland"],

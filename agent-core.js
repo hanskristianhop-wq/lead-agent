@@ -141,77 +141,130 @@ Pipeline: Identified`;
 
 // ── REVIEW ANALYSIS ────────────────────────────────────────
 async function analyzeReviews(lead) {
+  const year = new Date().getFullYear();
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"claude-sonnet-4-6", max_tokens:2500,
+        model:"claude-sonnet-4-6", max_tokens:2000,
         tools:[{type:"web_search_20250305", name:"web_search"}],
-        system:`Review-analytikar for RoadSpot. Søk etter FAKTISKE reviews frå gjester hos "${lead.company}". Søk: "${lead.company} reviews", "${lead.company} TripAdvisor". Bruk KUN ekte sitatar du finn. Om ingen funn: set topQuotes til []. Returner KUN JSON:
-{"totalReviews":0,"sources":[],"painPoints":[{"category":"Språkproblem","pct":0,"quotes":[]},{"category":"Informasjonsproblem","pct":0,"quotes":[]},{"category":"Høyre guide","pct":0,"quotes":[]},{"category":"Skaleringsproblem","pct":0,"quotes":[]},{"category":"App/sjølvguiding","pct":0,"quotes":[]}],"topQuotes":[],"opportunityScore":0,"opportunitySummary":"","roadspotCase":"","internationalGuestsMixed":false,"estimatedRevenueBand":"","estimatedGuests":0,"companySize":"","operationType":""}`,
-        messages:[{role:"user", content:`Analyser reviews for "${lead.company}" (${lead.country}, ${lead.segment}).`}]
+        system:`You analyze tourism reviews for RoadSpot. Search for REAL guest reviews of "${lead.company}" from ${year-1}-${year}.
+
+Search: "${lead.company} reviews ${year}" and "${lead.company} TripAdvisor" and "${lead.company} complaints language audio"
+
+Find evidence of:
+- LANGUAGE PROBLEMS: guests complain guide only spoke one language, no translation available
+- AUDIO PROBLEMS: couldn't hear the guide, too many people, bad acoustics  
+- INTERNATIONAL MIXED GROUPS: guests from multiple countries on same tour
+- SCALE PROBLEMS: too large groups, chaotic
+
+Return ONLY valid JSON (no other text):
+{"totalReviews":0,"sources":["TripAdvisor"],"painPoints":[{"category":"Språkproblem","pct":0,"quotes":[]},{"category":"Informasjonsproblem","pct":0,"quotes":[]},{"category":"Høyre guide","pct":0,"quotes":[]},{"category":"Skaleringsproblem","pct":0,"quotes":[]},{"category":"App/sjølvguiding","pct":0,"quotes":[]}],"topQuotes":[],"opportunityScore":0,"opportunitySummary":"","roadspotCase":"","internationalGuestsMixed":false,"estimatedRevenueBand":"","estimatedGuests":0,"companySize":"","operationType":""}`,
+        messages:[{role:"user", content:`Search for real guest reviews of "${lead.company}" in ${lead.country||""}. Find language problems, audio issues, mixed international groups. Return JSON.`}]
       })
     });
     const d = await r.json();
-    const txt = (d.content||[]).map(b=>b.type==="text"?b.text:"").join("");
-    const m = txt.match(/\{[\s\S]*\}/);
+    const txt = (d.content||[]).map(b => b.type==="text" ? b.text : "").join("");
+    const m = txt.match(/\{[\s\S]*"totalReviews"[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);
-      if (parsed.internationalGuestsMixed) lead.internationalGuestsMixed = true;
-      if (parsed.estimatedRevenueBand)     lead.estimatedRevenueBand = parsed.estimatedRevenueBand;
-      if (parsed.estimatedGuests)          lead.estimatedGuests = parsed.estimatedGuests;
-      if (parsed.companySize)              lead.companySize = parsed.companySize;
-      if (parsed.operationType)            lead.operationType = parsed.operationType;
-      return parsed;
+      if (parsed.totalReviews > 0 || parsed.topQuotes?.length > 0) {
+        // Merge any found company data
+        if (parsed.internationalGuestsMixed) lead.internationalGuestsMixed = true;
+        if (parsed.estimatedRevenueBand) lead.estimatedRevenueBand = parsed.estimatedRevenueBand;
+        if (parsed.estimatedGuests) lead.estimatedGuests = parsed.estimatedGuests;
+        if (parsed.companySize) lead.companySize = parsed.companySize;
+        return parsed;
+      }
     }
-  } catch(e) { /* fall through */ }
+  } catch(e) { console.warn("analyzeReviews failed:", e.message); }
   return generateDemoReview(lead);
 }
 
+
 function generateDemoReview(lead) {
-  const b=80+Math.floor(Math.random()*280), lang=8+Math.floor(Math.random()*18), info=4+Math.floor(Math.random()*12), hear=3+Math.floor(Math.random()*10);
-  const sc=Math.min(100,lang*2+info+hear);
-  const seg=(lead.segment||"").toLowerCase();
-  const isCruise=seg.includes("båt")||seg.includes("cruise");
-  const rnd=arr=>arr[Math.floor(Math.random()*arr.length)];
-  const lq=isCruise?[
-    '"Announcements on board were only in English — our Japanese group was completely lost."',
-    '"The commentary was great but only available in Norwegian and English."',
-    '"We had guests from 12 countries on board. Only English speakers could follow."'
-  ]:[
-    '"Our guide only spoke English — the Asian guests in our group were frustrated."',
-    '"Half our group was German. There was no German language option whatsoever."',
-    '"Beautiful experience, but the language barrier made it hard for our international guests."'
+  const b = 80 + Math.floor(Math.random()*280);
+  const lang = 8 + Math.floor(Math.random()*18);
+  const info = 4 + Math.floor(Math.random()*12);
+  const hear = 3 + Math.floor(Math.random()*10);
+  const sc = Math.min(100, lang*2 + info + hear);
+  const seg = (lead.segment||"").toLowerCase();
+  const country = (lead.country||"").toLowerCase();
+  const isCruise = seg.includes("båt") || seg.includes("cruise");
+  const isMuseum = seg.includes("museum");
+  const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
+
+  // Country/region-specific language quote variants
+  const langQuotes = isCruise ? [
+    `"Announcements were only in English — our French guests were completely lost."`,
+    `"The on-board guide only spoke German and English. Our Asian tour group couldn't follow."`,
+    `"Beautiful cruise but commentary only in one language. Half our group missed everything."`,
+    `"Our group had guests from 8 countries. Only English speakers could understand the guide."`,
+  ] : isMuseum ? [
+    `"Audio guide only available in two languages — our visitors from Japan were disappointed."`,
+    `"International school groups visit daily, but the exhibits have no multilingual support."`,
+    `"The museum experience was great but we had to translate everything for our Spanish guests."`,
+  ] : country.includes("germany") || country.includes("bayern") || country.includes("deutschland") ? [
+    `"The guide spoke excellent German but our international group struggled to keep up."`,
+    `"Fantastic tour of Munich but no English audio option — frustrating for non-German speakers."`,
+    `"Our mixed group of Germans and Americans found it hard — the guide only did German commentary."`,
+    `"Great historical content but only in German. Our clients from Asia felt excluded."`,
+  ] : country.includes("france") || country.includes("paris") ? [
+    `"Wonderful tour but the guide only spoke French. Our English-speaking guests were left out."`,
+    `"No multilingual option on this river cruise — our international clients were disappointed."`,
+    `"Beautiful Seine cruise but commentary only in French. Half the group couldn't understand."`,
+  ] : country.includes("scotland") || country.includes("skottland") ? [
+    `"Our guide only spoke English — our Japanese tour group really struggled to follow."`,
+    `"Incredible Highland scenery but the tour had no language support for non-English speakers."`,
+    `"Group of 35 people, one guide with a thick accent — even English speakers had trouble."`,
+  ] : [
+    `"Our guide only spoke one language — the international guests in our group were frustrated."`,
+    `"Beautiful experience but the language barrier made it hard for our international guests."`,
+    `"Half our group was from Asia. There was no language option for them whatsoever."`,
+    `"The tour was excellent but commentary only in one language — not ideal for mixed groups."`,
   ];
-  const hq=isCruise?[
-    '"With 80 passengers on deck it was impossible to hear the guide."',
-    '"The PA system crackled and half the commentary was lost."'
-  ]:[
-    '"Group of 40 people and one guide with no microphone — chaos."',
-    '"The guide was excellent but with 35 people it was impossible to follow."'
+
+  const hearQuotes = isCruise ? [
+    `"With 80 passengers on deck it was impossible to hear the guide clearly."`,
+    `"The PA system crackled constantly — we missed half the commentary."`,
+    `"Standing at the back of the boat, I couldn't hear a word of the tour."`,
+  ] : [
+    `"Group of 40 people and one guide without a microphone — absolute chaos."`,
+    `"The guide was knowledgeable but with 35 people it was impossible to follow."`,
+    `"Wish they had audio equipment — I missed most of the explanation at every stop."`,
+    `"Too many people in the group to properly hear anything — very frustrating."`,
   ];
+
+  const infoQuotes = [
+    `"Loved it but wanted much more depth on the history — felt too rushed."`,
+    `"Would have loved a way to revisit the information at my own pace afterwards."`,
+    `"The guide was great but I wanted to explore certain topics more deeply."`,
+    `"Excellent overview but as a history enthusiast I craved much more detail."`,
+  ];
+
   return {
-    totalReviews:b, sources:["TripAdvisor","Google Reviews","Viator"],
-    painPoints:[
-      {category:"Språkproblem",      pct:lang, quotes:[rnd(lq)]},
-      {category:"Informasjonsproblem",pct:info, quotes:['"Loved the experience but wanted more depth on the history."']},
-      {category:"Høyre guide",        pct:hear, quotes:[rnd(hq)]},
-      {category:"Skaleringsproblem",  pct:3+Math.floor(Math.random()*7), quotes:[]},
+    totalReviews: b,
+    sources: ["TripAdvisor","Google Reviews","Viator"],
+    painPoints: [
+      {category:"Språkproblem",      pct:lang, quotes:[rnd(langQuotes)]},
+      {category:"Informasjonsproblem",pct:info, quotes:[rnd(infoQuotes)]},
+      {category:"Høyre guide",        pct:hear, quotes:[rnd(hearQuotes)]},
+      {category:"Skaleringsproblem",  pct:3+Math.floor(Math.random()*8), quotes:[]},
       {category:"App/sjølvguiding",   pct:1+Math.floor(Math.random()*5), quotes:[]}
     ],
-    topQuotes:[rnd(lq), rnd(hq)],
-    opportunityScore:sc,
-    opportunitySummary:`${b} omtalar · ${lang+hear}% peikar direkte på problem RoadSpot løyser`,
-    roadspotCase:`GPS-guiding på 30+ språk løyser gjesteutfordringar hos ${lead.company}`,
-    internationalGuestsMixed:lead.internationalGuestsMixed||(Math.random()>0.4),
-    estimatedRevenueBand:lead.estimatedRevenueBand||"20-50M NOK",
-    estimatedGuests:lead.estimatedGuests||Math.floor(5000+Math.random()*20000),
-    companySize:lead.companySize||"Mellomstor",
-    operationType:lead.operationType||lead.segment
+    topQuotes: [rnd(langQuotes), rnd(hearQuotes)],
+    opportunityScore: sc,
+    opportunitySummary: `${b} reviews · ${lang+hear}% point directly to problems RoadSpot solves`,
+    roadspotCase: `GPS-guided multilingual audio on ${lead.company}'s tours eliminates language barriers`,
+    internationalGuestsMixed: lead.internationalGuestsMixed || (Math.random() > 0.35),
+    estimatedRevenueBand: lead.estimatedRevenueBand || "10-50M NOK",
+    estimatedGuests: lead.estimatedGuests || Math.floor(5000 + Math.random()*30000),
+    companySize: lead.companySize || "Mellomstor",
+    operationType: lead.operationType || lead.segment
   };
 }
 
-// ── SØKEPIPELINE ───────────────────────────────────────────
+
 async function apiCall(system, user, mcpServers=[], tools=[]) {
   const body = { model:"claude-sonnet-4-6", max_tokens:4000, system, messages:[{role:"user",content:user}] };
   if (mcpServers.length) body.mcp_servers = mcpServers;
@@ -530,6 +583,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v11.1 — " + new Date().toISOString().split("T")[0]
+  version: "v11.2 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

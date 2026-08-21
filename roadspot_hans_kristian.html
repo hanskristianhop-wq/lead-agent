@@ -381,6 +381,160 @@ function mkKey(l) { return (l.website||l.company||"").toLowerCase().replace(/^ww
 function addToMemory(m,l,id,name) { const k=mkKey(l); if(!k)return; if(!m.companies)m.companies={}; m.companies[k]={company:l.company,website:l.website||"",country:l.country||"",agent:id,agentName:name,hubspotId:l.hubspotId||"",tier:l.tier||0,date:new Date().toISOString().split("T")[0]}; }
 function addRunToMemory(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; m.totalLeads=(m.totalLeads||0)+(r.newLeads||0); }
 
+// ── SYSTEMSJEKK ────────────────────────────────────────────
+async function runSystemCheck() {
+  const cfg = getCfg();
+  const results = [];
+  
+  // Helper
+  async function check(name, fn) {
+    try {
+      const r = await fn();
+      results.push({name, ok: r.ok, detail: r.detail});
+    } catch(e) {
+      results.push({name, ok: false, detail: e.message});
+    }
+  }
+
+  // Show checking modal
+  document.getElementById("run-idle").style.display = "none";
+  document.getElementById("run-running").style.display = "block";
+  document.getElementById("run-status").textContent = "Sjekkar alle koplingane…";
+  prog(5);
+
+  // 1. Innstillingar
+  await check("Innstillingar", async () => {
+    const ok = !!(cfg.email && cfg.name && cfg.geos?.length && cfg.segs?.length);
+    return { ok, detail: ok ? `${cfg.name} · ${cfg.email} · ${cfg.geos.join(", ")} · ${cfg.months}` : "Manglar e-post eller innstillingar" };
+  });
+  prog(15, "Sjekkar HubSpot…");
+
+  // 2. HubSpot
+  await check("HubSpot", async () => {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6", max_tokens: 300,
+        system: `HubSpot MCP. Do a simple search for any company. Return JSON: {"connected": true, "detail": "what you found"}`,
+        messages: [{role: "user", content: "Search HubSpot for any company to test connection. Return JSON."}],
+        mcp_servers: [{type: "url", url: RS.HUBSPOT, name: "hubspot"}]
+      })
+    });
+    const d = await r.json();
+    const txt = (d.content||[]).map(b => b.type==="text" ? b.text : b.type==="mcp_tool_result" ? (b.content?.[0]?.text||"") : "").join("");
+    const hasToolCall = d.content?.some(b => b.type==="mcp_tool_use");
+    const hasResult = d.content?.some(b => b.type==="mcp_tool_result");
+    if (hasToolCall && hasResult) return {ok: true, detail: "Tilkopla og responderer"};
+    if (hasToolCall) return {ok: false, detail: "Kall sendt men ingen respons — sjekk HubSpot-tilgang"};
+    return {ok: false, detail: "Ingen tool-kall — HubSpot MCP ikkje tilkopla"};
+  });
+  prog(35, "Sjekkar Gmail…");
+
+  // 3. Gmail
+  await check("Gmail", async () => {
+    if (!cfg.email) return {ok: false, detail: "Ingen e-post sett i innstillingar"};
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6", max_tokens: 300,
+        system: `Gmail MCP. List recent drafts or messages to verify connection. Return JSON: {"connected": true, "email": "${cfg.email}", "detail": "..."}`,
+        messages: [{role: "user", content: `Verify Gmail connection for ${cfg.email}. List any recent draft. Return JSON.`}],
+        mcp_servers: [{type: "url", url: RS.GMAIL, name: "gmail"}]
+      })
+    });
+    const d = await r.json();
+    const hasToolCall = d.content?.some(b => b.type==="mcp_tool_use");
+    const hasResult = d.content?.some(b => b.type==="mcp_tool_result");
+    if (hasToolCall && hasResult) return {ok: true, detail: `Tilkopla — ${cfg.email}`};
+    if (hasToolCall) return {ok: false, detail: "Gmail kall sendt men ingen respons"};
+    return {ok: false, detail: "Gmail MCP ikkje tilkopla — sjekk integrasjoner i claude.ai"};
+  });
+  prog(55, "Sjekkar Apollo…");
+
+  // 4. Apollo
+  await check("Apollo", async () => {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6", max_tokens: 300,
+        system: `Apollo.io MCP. Search for any company to test. Return JSON: {"connected": true, "detail": "..."}`,
+        messages: [{role: "user", content: "Search Apollo for Havila Kystruten. Return JSON."}],
+        mcp_servers: [{type: "url", url: RS.APOLLO, name: "apollo"}]
+      })
+    });
+    const d = await r.json();
+    const hasToolCall = d.content?.some(b => b.type==="mcp_tool_use");
+    const hasResult = d.content?.some(b => b.type==="mcp_tool_result");
+    if (hasToolCall && hasResult) return {ok: true, detail: "Apollo tilkopla og responderer"};
+    if (hasToolCall) return {ok: false, detail: "Apollo kall sendt men ingen respons"};
+    return {ok: false, detail: "Apollo MCP ikkje tilkopla — sjekk integrasjoner i claude.ai"};
+  });
+  prog(75, "Sjekkar websøk og minne…");
+
+  // 5. Web search
+  await check("Websøk", async () => {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6", max_tokens: 200,
+        tools: [{type: "web_search_20250305", name: "web_search"}],
+        messages: [{role: "user", content: "Search for RoadSpot.com and return the company description in JSON: {"found": true, "description": "..."}"}]
+      })
+    });
+    const d = await r.json();
+    const hasSearch = d.content?.some(b => b.type==="tool_use" && b.name==="web_search");
+    const hasResult = d.content?.some(b => b.type==="tool_result");
+    if (hasSearch || hasResult) return {ok: true, detail: "Websøk fungerer"};
+    const txt = d.content?.find(b=>b.type==="text")?.text || "";
+    if (txt.length > 10) return {ok: true, detail: "Websøk fungerer (direkte svar)"};
+    return {ok: false, detail: "Websøk utilgjengeleg"};
+  });
+  prog(90, "Sjekkar minne…");
+
+  // 6. Minne
+  await check("Minne (localStorage)", async () => {
+    const mem = await loadMemory();
+    const cc = Object.keys(mem.companies||{}).length;
+    const rc = (mem.runs||[]).length;
+    return {ok: true, detail: `${cc} selskap i minne · ${rc} køyringar · siste: ${mem.lastRun||"aldri"}`};
+  });
+
+  prog(100, "Ferdig!");
+
+  // Show results
+  const allOk = results.every(r => r.ok);
+  const html = `
+    <div style="margin-top:16px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:${allOk?"#0F6E56":"#993C1D"}">
+        ${allOk ? "✅ Alt er kopla og fungerer!" : "⚠️ Nokre koplingar må fiksast"}
+      </div>
+      ${results.map(r => `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f1efe8">
+          <span style="font-size:16px;flex-shrink:0">${r.ok ? "✅" : "❌"}</span>
+          <div>
+            <div style="font-size:13px;font-weight:600">${r.name}</div>
+            <div style="font-size:12px;color:#666;margin-top:2px">${r.detail}</div>
+          </div>
+        </div>
+      `).join("")}
+      ${!allOk ? `<div style="margin-top:12px;padding:10px;background:#FEF9C3;border-radius:8px;font-size:12px">
+        <strong>Korleis fikse:</strong><br>
+        For HubSpot/Gmail/Apollo — gå til <a href="https://claude.ai" target="_blank" style="color:#2563EB">claude.ai</a> → Settings → Integrations og sjekk at alle er tilkopla.
+      </div>` : ""}
+    </div>`;
+
+  document.getElementById("rsub").innerHTML = "";
+  document.getElementById("run-status").innerHTML = "";
+  
+  // Show in a nice way
+  const card = document.querySelector("#run-running .card");
+  if (card) card.innerHTML = `
+    <h3 style="font-size:15px;font-weight:600;margin-bottom:4px">🔌 Systemsjekk — ${new Date().toLocaleTimeString("no-NO")}</h3>
+    ${html}
+    <button class="btn btn-p" style="margin-top:16px" onclick="document.getElementById('run-running').style.display='none';document.getElementById('run-idle').style.display='block'">← Tilbake</button>
+  `;
+}
+
 // ── BOOT ───────────────────────────────────────────────────
 async function boot() {
   try {

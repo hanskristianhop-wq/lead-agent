@@ -960,88 +960,129 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
       };
     },
     getDemoLeads(cfg) {
-      // Same geo+sesong+segment filter as agent-core.js v10.4
-      const all=[
-        {company:"Havila Kystruten",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Noreg",website:"havila.no",annualRevenue:800000000,estimatedGuests:60000,internationalGuestsMixed:true},
-        {company:"Visit Tromsø AS",segment:"Destinasjonsselskap",nextSeasonStart:"vinter",country:"Noreg",website:"visittromso.no",annualRevenue:65000000,estimatedGuests:120000,internationalGuestsMixed:true},
-        {company:"Kirkenes Snowhotel",segment:"Turoperatørar",nextSeasonStart:"vinter",country:"Noreg",website:"snowhotel.no",annualRevenue:42000000,estimatedGuests:7000,internationalGuestsMixed:true},
-        {company:"Norsk Fjordcruise",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Noreg",website:"fjordcruise.no",annualRevenue:95000000,estimatedGuests:40000,internationalGuestsMixed:true},
-        {company:"Icehotel Jukkasjärvi",segment:"Turoperatørar",nextSeasonStart:"vinter",country:"Sverige",website:"icehotel.com",annualRevenue:80000000,estimatedGuests:15000,internationalGuestsMixed:true},
-        {company:"Visit Copenhagen",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Danmark",website:"visitcopenhagen.com",annualRevenue:90000000,estimatedGuests:300000,internationalGuestsMixed:true},
-        {company:"Visit Rovaniemi",segment:"Destinasjonsselskap",nextSeasonStart:"vinter",country:"Finland",website:"visitrovaniemi.fi",annualRevenue:35000000,estimatedGuests:50000,internationalGuestsMixed:true},
-        {company:"Visit Iceland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Island",website:"visitreykjavik.is",annualRevenue:120000000,estimatedGuests:100000,internationalGuestsMixed:true},
-        {company:"Rabbies Trail Burners",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Skottland",website:"rabbies.com",annualRevenue:45000000,estimatedGuests:25000,internationalGuestsMixed:true},
-        {company:"Visit Scotland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Skottland",website:"visitscotland.com",annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true},
-        {company:"Caledonian MacBrayne",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Skottland",website:"calmac.co.uk",annualRevenue:180000000,estimatedGuests:200000,internationalGuestsMixed:true},
-        {company:"Loch Ness by Jacobite",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Skottland",website:"jacobite.co.uk",annualRevenue:18000000,estimatedGuests:80000,internationalGuestsMixed:true},
-        {company:"Edinburgh Bus Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Skottland",website:"edinburghbustours.com",annualRevenue:32000000,estimatedGuests:250000,internationalGuestsMixed:true},
-        {company:"Historic Environment Scotland",segment:"Museum",nextSeasonStart:"heilars",country:"Skottland",website:"historicenvironment.scot",annualRevenue:150000000,estimatedGuests:1000000,internationalGuestsMixed:true},
-        {company:"VisitBritain",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"England",website:"visitbritain.com",annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true},
-        {company:"Stonehenge Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"England",website:"stonehengetours.com",annualRevenue:28000000,estimatedGuests:120000,internationalGuestsMixed:true},
-        {company:"City Sightseeing UK",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"England",website:"city-sightseeing.com",annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true},
-        {company:"Windermere Lake Cruises",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"England",website:"windermere-lakecruises.co.uk",annualRevenue:14000000,estimatedGuests:100000,internationalGuestsMixed:true},
-        {company:"Visit Wales",segment:"Destinasjonsselskap",nextSeasonStart:"sommer",country:"Wales",website:"visitwales.com",annualRevenue:80000000,estimatedGuests:400000,internationalGuestsMixed:true},
-        {company:"Mersey Ferries",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"England",website:"merseyferries.co.uk",annualRevenue:25000000,estimatedGuests:200000,internationalGuestsMixed:true},
-        {company:"P&O Ferries UK",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"England",website:"poferries.com",annualRevenue:900000000,estimatedGuests:8000000,internationalGuestsMixed:true},
-        {company:"Paris City Vision",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Île-de-France",website:"pariscityvision.com",annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true},
-        {company:"Bateaux Mouches",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Île-de-France",website:"bateaux-mouches.fr",annualRevenue:45000000,estimatedGuests:1200000,internationalGuestsMixed:true},
-        {company:"Normandy American Tours",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Normandie",website:"normandy-tours.com",annualRevenue:18000000,estimatedGuests:40000,internationalGuestsMixed:true},
-        {company:"Gray Line New York",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Mid-Atlantic",website:"graylinenewyork.com",annualRevenue:120000000,estimatedGuests:800000,internationalGuestsMixed:true},
-        {company:"Alcatraz City Cruises",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Pacific Coast",website:"alcatrazcruises.com",annualRevenue:85000000,estimatedGuests:1400000,internationalGuestsMixed:true},
-        {company:"Grand Canyon Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Mountain West",website:"grandcanyontours.com",annualRevenue:65000000,estimatedGuests:200000,internationalGuestsMixed:true},
-      ];
-      const GM={
-        noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],
-        danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
-        uk:["uk","united kingdom","england","scotland","britain","wales","ireland",
-            "skottland","irland","nord-irland"],
-        skottland:["scotland","skottland"],
-        england:["england"],
-        "england-nord":["north england","yorkshire","manchester","liverpool","nord-england"],
-        "england-sør":["london","south england","southeast","sør-england"],
-        wales:["wales","cymru"],
-        irland:["ireland","eire","irland"],
-        "nord-irland":["northern ireland","nord-irland"],
-        frankrike:["france","frankrike"],
-        "île-de-france":["paris","île-de-france","ile de france"],
-        normandie:["normandie","normandy"],
-        bretagne:["bretagne","brittany"],
-        provence:["provence","côte d'azur","nice"],
-        loiredalen:["loire","loiredalen"],
-        alsace:["alsace","strasbourg"],
-        "alpane-fr":["alps","alpane","savoie","chamonix"],
-        tyskland:["germany","deutschland","tyskland"],
-        bayern:["bavaria","bayern","münchen","munich"],
-        "nord-tyskland":["hamburg","bremen","nord-tyskland","north germany"],
-        rheinland:["rhine","rheinland","cologne","köln","düsseldorf"],
-        "aust-tyskland":["saxony","sachsen","dresden","leipzig","aust-tyskland"],
-        berlin:["berlin"],
-        nederland:["nederland","netherlands","holland"],
-        belgia:["belgium","belgia"],
-        sveits:["switzerland","sveits","schweiz"],
-        austerrike:["austria","austerrike","österreich"],
-        italia:["italy","italia"],
-        spania:["spain","spania","españa"],
-        usa:["usa","united states","us","america"],
-        "new england":["new england","maine","massachusetts","vermont","connecticut"],
-        "mid-atlantic":["new york","new jersey","pennsylvania","maryland","mid-atlantic"],
-        "southeast usa":["florida","georgia","tennessee","southeast usa"],
-        "midwest usa":["ohio","michigan","illinois","midwest usa"],
-        "mountain west":["colorado","utah","wyoming","montana","arizona","mountain west"],
-        "pacific coast":["california","oregon","washington state","los angeles","san francisco","pacific coast"],
-        "texas gulf":["texas","houston","dallas","texas gulf"],
-        "alaska hawaii":["alaska","hawaii"],
-        canada:["canada","canadian"],
-        australia:["australia","australian"],
-        "new zealand":["new zealand","aotearoa"],
-        japan:["japan","japanese"]
-      };
-      if (!cfg?.geos?.length) return all;
-      const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
-      let f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
-      if(f.length===0) f=all;
-      if(cfg.months&&cfg.months!=="heilars"){const ws=f.filter(c=>c.nextSeasonStart==="heilars"||c.nextSeasonStart===cfg.months);if(ws.length>=3)f=ws;}
-      if(cfg.segs&&cfg.segs.length>0){const ws=f.filter(c=>cfg.segs.some(s=>(c.segment||"").toLowerCase().includes(s.toLowerCase())));if(ws.length>=3)f=ws;}
-      return f.length>0?f:all;
-    },
+  const all = [
+    // NOREG
+    {company:"Havila Kystruten",       segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Noreg",    website:"havila.no",                   annualRevenue:800000000,estimatedGuests:60000,  internationalGuestsMixed:true},
+    {company:"Norsk Fjordcruise",      segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Noreg",    website:"fjordcruise.no",               annualRevenue:95000000, estimatedGuests:40000,  internationalGuestsMixed:true},
+    {company:"Visit Tromsø AS",        segment:"Destinasjonsselskap",  nextSeasonStart:"vinter", country:"Noreg",    website:"visittromso.no",               annualRevenue:65000000, estimatedGuests:120000, internationalGuestsMixed:true},
+    {company:"Visit Svalbard AS",      segment:"Destinasjonsselskap",  nextSeasonStart:"vinter", country:"Noreg",    website:"visitsvalbard.com",            annualRevenue:55000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"North Norway Tours",     segment:"Turoperatørar",        nextSeasonStart:"vinter", country:"Noreg",    website:"northnorwaytours.no",          annualRevenue:32000000, estimatedGuests:6000,   internationalGuestsMixed:true},
+    {company:"Kirkenes Snowhotel",     segment:"Turoperatørar",        nextSeasonStart:"vinter", country:"Noreg",    website:"snowhotel.no",                 annualRevenue:42000000, estimatedGuests:7000,   internationalGuestsMixed:true},
+    {company:"Polarmuseet Tromsø",     segment:"Museum",               nextSeasonStart:"heilars",country:"Noreg",    website:"polarmuseet.no",               annualRevenue:22000000, estimatedGuests:40000,  internationalGuestsMixed:true},
+    // SVERIGE
+    {company:"Icehotel Jukkasjärvi",   segment:"Turoperatørar",        nextSeasonStart:"vinter", country:"Sverige",  website:"icehotel.com",                 annualRevenue:80000000, estimatedGuests:15000,  internationalGuestsMixed:true},
+    {company:"Swedish Lapland",        segment:"Destinasjonsselskap",  nextSeasonStart:"vinter", country:"Sverige",  website:"swedishlapland.com",           annualRevenue:45000000, estimatedGuests:20000,  internationalGuestsMixed:true},
+    // DANMARK
+    {company:"Visit Copenhagen",       segment:"Destinasjonsselskap",  nextSeasonStart:"heilars",country:"Danmark",  website:"visitcopenhagen.com",          annualRevenue:90000000, estimatedGuests:300000, internationalGuestsMixed:true},
+    {company:"DFDS Cruises",           segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Danmark",  website:"dfds.com",                     annualRevenue:800000000,estimatedGuests:400000, internationalGuestsMixed:true},
+    // FINLAND
+    {company:"Visit Rovaniemi",        segment:"Destinasjonsselskap",  nextSeasonStart:"vinter", country:"Finland",  website:"visitrovaniemi.fi",            annualRevenue:35000000, estimatedGuests:50000,  internationalGuestsMixed:true},
+    {company:"Santa Claus Village",    segment:"Turoperatørar",        nextSeasonStart:"vinter", country:"Finland",  website:"santaclausvillage.info",       annualRevenue:60000000, estimatedGuests:50000,  internationalGuestsMixed:true},
+    // ISLAND
+    {company:"Visit Iceland",          segment:"Destinasjonsselskap",  nextSeasonStart:"heilars",country:"Island",   website:"visitreykjavik.is",            annualRevenue:120000000,estimatedGuests:100000, internationalGuestsMixed:true},
+    {company:"Arctic Adventures IS",   segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"Island",   website:"adventures.is",                annualRevenue:35000000, estimatedGuests:40000,  internationalGuestsMixed:true},
+    // SKOTTLAND
+    {company:"Visit Scotland",         segment:"Destinasjonsselskap",  nextSeasonStart:"heilars",country:"Skottland",website:"visitscotland.com",            annualRevenue:200000000,estimatedGuests:500000, internationalGuestsMixed:true},
+    {company:"Rabbies Trail Burners",  segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Skottland",website:"rabbies.com",                  annualRevenue:45000000, estimatedGuests:25000,  internationalGuestsMixed:true},
+    {company:"Caledonian MacBrayne",   segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",website:"calmac.co.uk",                 annualRevenue:180000000,estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Loch Ness by Jacobite",  segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",website:"jacobite.co.uk",               annualRevenue:18000000, estimatedGuests:80000,  internationalGuestsMixed:true},
+    {company:"Edinburgh Bus Tours",    segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"Skottland",website:"edinburghbustours.com",        annualRevenue:32000000, estimatedGuests:250000, internationalGuestsMixed:true},
+    {company:"Historic Environment Scotland",segment:"Museum",         nextSeasonStart:"heilars",country:"Skottland",website:"historicenvironment.scot",     annualRevenue:150000000,estimatedGuests:1000000,internationalGuestsMixed:true},
+    {company:"Highlands Unbounded",    segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Skottland",website:"highlandsunbounded.com",       annualRevenue:11000000, estimatedGuests:8000,   internationalGuestsMixed:true},
+    {company:"Orkney Ferries",         segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",website:"orkneyferries.co.uk",          annualRevenue:22000000, estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"National Museum Scotland",segment:"Museum",              nextSeasonStart:"heilars",country:"Skottland",website:"nms.ac.uk",                    annualRevenue:65000000, estimatedGuests:2500000,internationalGuestsMixed:true},
+    {company:"Loch Lomond & Trossachs",segment:"Destinasjonsselskap",  nextSeasonStart:"sommer", country:"Skottland",website:"lochlomond-trossachs.org",    annualRevenue:45000000, estimatedGuests:4000000,internationalGuestsMixed:true},
+    {company:"Scottish Canals",        segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",website:"scottishcanals.co.uk",         annualRevenue:20000000, estimatedGuests:50000,  internationalGuestsMixed:true},
+    {company:"Trossachs Trundler",     segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Skottland",website:"trossachstrundler.com",        annualRevenue:10500000, estimatedGuests:12000,  internationalGuestsMixed:true},
+    {company:"Brightwater Holidays",   segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Skottland",website:"brightwaterholidays.com",      annualRevenue:15000000, estimatedGuests:10000,  internationalGuestsMixed:true},
+    // ENGLAND
+    {company:"VisitBritain",           segment:"Destinasjonsselskap",  nextSeasonStart:"heilars",country:"England",  website:"visitbritain.com",             annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true},
+    {company:"P&O Ferries UK",         segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"England",  website:"poferries.com",                annualRevenue:900000000,estimatedGuests:8000000,internationalGuestsMixed:true},
+    {company:"City Sightseeing UK",    segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"England",  website:"city-sightseeing.com",         annualRevenue:85000000, estimatedGuests:500000, internationalGuestsMixed:true},
+    {company:"Stonehenge Tours",       segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"England",  website:"stonehengetours.com",          annualRevenue:28000000, estimatedGuests:120000, internationalGuestsMixed:true},
+    {company:"Mersey Ferries",         segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"England",  website:"merseyferries.co.uk",          annualRevenue:25000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"Windermere Lake Cruises",segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"England",  website:"windermere-lakecruises.co.uk", annualRevenue:14000000, estimatedGuests:100000, internationalGuestsMixed:true},
+    {company:"Heart of England Tours", segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"England",  website:"heartofenglandtours.co.uk",    annualRevenue:12000000, estimatedGuests:20000,  internationalGuestsMixed:true},
+    {company:"Contiki UK",             segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"England",  website:"contiki.com",                  annualRevenue:200000000,estimatedGuests:150000, internationalGuestsMixed:true},
+    {company:"Shearings Group",        segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"England",  website:"shearings.com",                annualRevenue:120000000,estimatedGuests:80000,  internationalGuestsMixed:false},
+    // WALES
+    {company:"Visit Wales",            segment:"Destinasjonsselskap",  nextSeasonStart:"sommer", country:"Wales",    website:"visitwales.com",               annualRevenue:80000000, estimatedGuests:400000, internationalGuestsMixed:true},
+    // IRLAND
+    {company:"Wild Rover Tours",       segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Irland",   website:"wildrovertours.com",           annualRevenue:22000000, estimatedGuests:30000,  internationalGuestsMixed:true},
+    {company:"Tourism Ireland",        segment:"Destinasjonsselskap",  nextSeasonStart:"heilars",country:"Irland",   website:"tourismireland.com",           annualRevenue:150000000,estimatedGuests:500000, internationalGuestsMixed:true},
+    // NEDERLAND
+    {company:"Rederij Lovers",         segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nederland",website:"lovers.nl",                    annualRevenue:35000000, estimatedGuests:800000, internationalGuestsMixed:true},
+    // FRANKRIKE
+    {company:"Paris City Vision",      segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"Île-de-France",website:"pariscityvision.com",      annualRevenue:85000000, estimatedGuests:500000, internationalGuestsMixed:true},
+    {company:"Bateaux Mouches",        segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Île-de-France",website:"bateaux-mouches.fr",        annualRevenue:45000000, estimatedGuests:1200000,internationalGuestsMixed:true},
+    {company:"Chateau de Versailles",  segment:"Museum",               nextSeasonStart:"heilars",country:"Île-de-France",website:"chateauversailles.fr",      annualRevenue:200000000,estimatedGuests:8000000,internationalGuestsMixed:true},
+    {company:"Normandy American Tours",segment:"Turoperatørar",        nextSeasonStart:"sommer", country:"Normandie",website:"normandy-tours.com",           annualRevenue:18000000, estimatedGuests:40000,  internationalGuestsMixed:true},
+    {company:"Brittany Ferries",       segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Bretagne", website:"brittany-ferries.fr",          annualRevenue:900000000,estimatedGuests:2000000,internationalGuestsMixed:true},
+    // USA
+    {company:"Gray Line New York",     segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"Mid-Atlantic",website:"graylinenewyork.com",       annualRevenue:120000000,estimatedGuests:800000, internationalGuestsMixed:true},
+    {company:"Alcatraz City Cruises",  segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Pacific Coast",website:"alcatrazcruises.com",       annualRevenue:85000000, estimatedGuests:1400000,internationalGuestsMixed:true},
+    {company:"Grand Canyon Tours",     segment:"Turoperatørar",        nextSeasonStart:"heilars",country:"Mountain West",website:"grandcanyontours.com",     annualRevenue:65000000, estimatedGuests:200000, internationalGuestsMixed:true},
+    {company:"New England Cruise",     segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"New England",website:"newenglandcruise.com",        annualRevenue:35000000, estimatedGuests:50000,  internationalGuestsMixed:true},
+  ];
+
+  if (!cfg?.geos?.length) return all;
+
+  const GM = {
+    noreg:["noreg","norge","norway"], sverige:["sverige","sweden"],
+    danmark:["danmark","denmark"], finland:["finland"],
+    island:["island","iceland"],
+    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","skottland","irland","nord-irland"],
+    skottland:["scotland","skottland"], england:["england"],
+    wales:["wales","cymru"], irland:["ireland","eire","irland"],
+    "nord-irland":["northern ireland","nord-irland"],
+    "england-nord":["north england","yorkshire","manchester","liverpool"],
+    "england-sør":["london","south england","southeast"],
+    frankrike:["france","frankrike"],
+    "île-de-france":["île-de-france","paris","ile de france"],
+    normandie:["normandie","normandy"], bretagne:["bretagne","brittany"],
+    provence:["provence","côte d'azur","nice"], loiredalen:["loire"],
+    alsace:["alsace"], "alpane-fr":["alps","savoie","chamonix"],
+    tyskland:["germany","deutschland","tyskland"],
+    bayern:["bavaria","bayern","münchen","munich"],
+    "nord-tyskland":["hamburg","bremen","nord-tyskland"],
+    rheinland:["rhine","rheinland","cologne","köln","düsseldorf"],
+    "aust-tyskland":["saxony","sachsen","dresden","leipzig"],
+    berlin:["berlin"], nederland:["nederland","netherlands","holland"],
+    belgia:["belgium","belgia"], sveits:["switzerland","sveits"],
+    austerrike:["austria","austerrike"], italia:["italy","italia"],
+    spania:["spain","spania"],
+    usa:["usa","united states","america"],
+    "mid-atlantic":["mid-atlantic","new york","new jersey","pennsylvania","maryland"],
+    "pacific coast":["pacific coast","california","oregon","san francisco","los angeles"],
+    "mountain west":["mountain west","colorado","utah","wyoming","montana","arizona"],
+    "new england":["new england","maine","massachusetts","vermont"],
+    "southeast usa":["southeast usa","florida","georgia","tennessee"],
+    "midwest usa":["midwest usa","ohio","michigan","illinois"],
+    "texas gulf":["texas gulf","texas","houston","dallas"],
+    canada:["canada"], australia:["australia"],
+    "new zealand":["new zealand"], japan:["japan"],
+  };
+
+  // Geo-filter
+  const ok = new Set();
+  cfg.geos.forEach(g => { (GM[g.toLowerCase()] || [g.toLowerCase()]).forEach(v => ok.add(v)); });
+  let f = all.filter(c => [...ok].some(a => (c.country||"").toLowerCase().includes(a)));
+  if (f.length === 0) f = all;
+
+  // Sesong-filter: heilars alltid inkludert
+  if (cfg.months && cfg.months !== "heilars") {
+    const ws = f.filter(c => c.nextSeasonStart === "heilars" || c.nextSeasonStart === cfg.months);
+    if (ws.length >= 3) f = ws;
+  }
+
+  // Segment-filter
+  if (cfg.segs && cfg.segs.length > 0) {
+    const ws = f.filter(c => cfg.segs.some(s =>
+      (c.segment||"").toLowerCase().includes(s.toLowerCase().split("/")[0])
+    ));
+    if (ws.length >= 3) f = ws;
+  }
+
+  return f;
+},
     >

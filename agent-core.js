@@ -493,18 +493,27 @@ async function findAndEnrichLeads(cfg) {
   }
 
   // Step 3: Always top up with demo data to guarantee 25 results
+  // Note: demo data bypasses memory check since these are just starting points
   if (companies.length < 25) {
-    console.log("Step 3: Topping up with demo data to reach 25");
-    addUnique(getDemoLeads(cfg));
-    if (companies.length < 25) {
-      addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: cfg.segs}));
+    console.log("Step 3: Topping up with demo data, currently have", companies.length);
+    const existingWebsites = new Set(companies.map(c => (c.website||"").toLowerCase()));
+    
+    function addDemoUnique(list) {
+      for (const c of list) {
+        const website = (c.website||"").toLowerCase();
+        if (!existingWebsites.has(website) && website) {
+          existingWebsites.add(website);
+          companies.push(c);
+        }
+        if (companies.length >= 25) break;
+      }
     }
-    if (companies.length < 25) {
-      addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: []}));
-    }
-    if (companies.length < 25) {
-      addUnique(getDemoLeads({})); // all countries as last resort
-    }
+    
+    addDemoUnique(getDemoLeads(cfg));
+    if (companies.length < 25) addDemoUnique(getDemoLeads({geos: cfg.geos, months: null, segs: cfg.segs}));
+    if (companies.length < 25) addDemoUnique(getDemoLeads({geos: cfg.geos, months: null, segs: []}));
+    if (companies.length < 25) addDemoUnique(getDemoLeads({}));
+    console.log("After demo top-up:", companies.length, "companies");
   }
 
   // Step 4: Apollo enrichment for contact info on top results
@@ -668,6 +677,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v11.3 — " + new Date().toISOString().split("T")[0]
+  version: "v11.4 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

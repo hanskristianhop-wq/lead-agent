@@ -960,45 +960,47 @@ Tier: ${l.tier} · Score: ${l.priorityScore}`; },
         opType:lead.operationType||(review&&review.operationType)||lead.segment
       };
     },
-    getDemoLeads(cfg) { const all = [
-      {company:"Tromsø Villmarkssenter",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Erik Johansen",title:"CEO",email:"erik@villmarkssenter.no",country:"Noreg",website:"villmarkssenter.no"},
-      {company:"Best Arctic AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Hans Petter Lie",title:"Sales Director",email:"hans@bestarctic.no",country:"Noreg",website:"bestarctic.no"},
-      {company:"Swedish Lapland Visitors",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Lars Nilsson",title:"Marketing Director",email:"lars@swedishlapland.com",country:"Sverige",website:"swedishlapland.com"},
-      {company:"Icehotel Jukkasjärvi",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Emma Lindgren",title:"Commercial Director",email:"emma@icehotel.com",country:"Sverige",website:"icehotel.com"},
-      {company:"Visit Rovaniemi",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Mikko Mäkinen",title:"CEO",email:"mikko@visitrovaniemi.fi",country:"Finland",website:"visitrovaniemi.fi"},
-      {company:"Lyngen Alpine Experience",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Marte Dahl",title:"Head of Experience",email:"marte@lyngenalpine.no",country:"Noreg",website:"lyngenalpine.no"},
-      {company:"Polarmuseet Tromsø",segment:"Museum",season:"Vinter",nextSeasonStart:"September 2026",contact:"Kristine Ruud",title:"Dagleg leiar",email:"kruud@polarmuseet.no",country:"Noreg",website:"polarmuseet.no"},
-      {company:"Chasing Lights AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Marius Strand",title:"Commercial Director",email:"marius@chasinglights.no",country:"Noreg",website:"chasinglights.no"},
-      {company:"Visit Iceland Reykjavik",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Sigurdur Bjornsson",title:"Marketing Manager",email:"s.bjornsson@visitreykjavik.is",country:"Island",website:"visitreykjavik.is"},
-      {company:"Svalbard Wildlife",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Frida Mork",title:"Product Manager",email:"frida@svalbard-wildlife.no",country:"Noreg",website:"svalbard-wildlife.no"},
-      {company:"Alta Adventures AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Petter Nygård",title:"CEO",email:"petter@alta-adventures.no",country:"Noreg",website:"alta-adventures.no"},
-      {company:"Gaupe Husky AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Sigve Olsen",title:"CEO",email:"sigve@gaupehusky.no",country:"Noreg",website:"gaupehusky.no"},
-      {company:"North Norway Tours",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Ingrid Eide",title:"Commercial Director",email:"ieide@northnorwaytours.no",country:"Noreg",website:"northnorwaytours.no"},
-      {company:"Narvik Opplevelser AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Rune Strand",title:"CEO",email:"rune@narvik-opplevelser.no",country:"Noreg",website:"narvik-opplevelser.no"},
-      {company:"Destination Lofoten AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Lars Berg",title:"CEO",email:"lars@destinationlofoten.no",country:"Noreg",website:"destinationlofoten.no"},
-      {company:"Visit Svalbard AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"September 2026",contact:"Nina Grønnevet",title:"Marketing Director",email:"nina@visitsvalbard.com",country:"Noreg",website:"visitsvalbard.com"},
-      {company:"Tromsø Arctic Reindeer",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Sara Aas",title:"Operations Manager",email:"sara@arcticreindeer.no",country:"Noreg",website:"arcticreindeer.no"},
-      {company:"Kirkenes Snowhotel AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Trine Kvam",title:"CEO",email:"trine@snowhotel.no",country:"Noreg",website:"snowhotel.no"},
-      {company:"Senja Adventures AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Bjørn Solberg",title:"CEO",email:"bjorn@senjaadventures.no",country:"Noreg",website:"senjaadventures.no"},
-      {company:"Norsk Jernbanemuseum",segment:"Museum",season:"Vinter",nextSeasonStart:"September 2026",contact:"Astrid Dahl",title:"Head of Experience",email:"adahl@jernbanemuseum.no",country:"Noreg",website:"jernbanemuseum.no"},
-      {company:"Bodø Aktivitet AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Tone Moe",title:"Sales Director",email:"tone@bodo-aktivitet.no",country:"Noreg",website:"bodo-aktivitet.no"},
-      {company:"Abisko Naturum",segment:"Naturopplevingar",season:"Vinter",nextSeasonStart:"Desember 2026",contact:"Anna Eriksson",title:"Head of Experience",email:"anna@abisko.se",country:"Sverige",website:"abisko.se"},
-      {company:"Arctic Wilderness Norway",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"Oktober 2026",contact:"Hilde Moe",title:"Head of Experience",email:"hmoe@arcticwilderness.no",country:"Noreg",website:"arcticwilderness.no"},
-      {company:"Nordlys Explorer AS",segment:"Turoperatørar",season:"Vinter",nextSeasonStart:"November 2026",contact:"Knut Olsen",title:"Managing Director",email:"knut@nordlysexplorer.no",country:"Noreg",website:"nordlysexplorer.no"},
-      {company:"Visit Tromsø AS",segment:"Destinasjonsselskap",season:"Vinter",nextSeasonStart:"November 2026",contact:"Silje Andersen",title:"Marketing Director",email:"silje@visittromso.no",country:"Noreg",website:"visittromso.no"}
-    ];
-      if (!cfg || !cfg.geos || !cfg.geos.length) return all;
-      const GM={'noreg':['noreg','norge','norway'],'sverige':['sverige','sweden'],'danmark':['danmark','denmark'],'finland':['finland'],'island':['island','iceland'],'uk':['uk','united kingdom','england','scotland','britain'],'nederland':['nederland','netherlands'],'tyskland':['germany','deutschland','tyskland'],'frankrike':['france','frankrike'],'spania':['spain','spania'],'italia':['italy','italia']};
+    getDemoLeads(cfg) {
+      // Same geo+sesong+segment filter as agent-core.js v10.4
+      const all=[
+        {company:"Havila Kystruten",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Noreg",website:"havila.no",annualRevenue:800000000,estimatedGuests:60000,internationalGuestsMixed:true},
+        {company:"Visit Tromsø AS",segment:"Destinasjonsselskap",nextSeasonStart:"vinter",country:"Noreg",website:"visittromso.no",annualRevenue:65000000,estimatedGuests:120000,internationalGuestsMixed:true},
+        {company:"Kirkenes Snowhotel",segment:"Turoperatørar",nextSeasonStart:"vinter",country:"Noreg",website:"snowhotel.no",annualRevenue:42000000,estimatedGuests:7000,internationalGuestsMixed:true},
+        {company:"Norsk Fjordcruise",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Noreg",website:"fjordcruise.no",annualRevenue:95000000,estimatedGuests:40000,internationalGuestsMixed:true},
+        {company:"Icehotel Jukkasjärvi",segment:"Turoperatørar",nextSeasonStart:"vinter",country:"Sverige",website:"icehotel.com",annualRevenue:80000000,estimatedGuests:15000,internationalGuestsMixed:true},
+        {company:"Visit Copenhagen",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Danmark",website:"visitcopenhagen.com",annualRevenue:90000000,estimatedGuests:300000,internationalGuestsMixed:true},
+        {company:"Visit Rovaniemi",segment:"Destinasjonsselskap",nextSeasonStart:"vinter",country:"Finland",website:"visitrovaniemi.fi",annualRevenue:35000000,estimatedGuests:50000,internationalGuestsMixed:true},
+        {company:"Visit Iceland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Island",website:"visitreykjavik.is",annualRevenue:120000000,estimatedGuests:100000,internationalGuestsMixed:true},
+        {company:"Rabbies Trail Burners",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Skottland",website:"rabbies.com",annualRevenue:45000000,estimatedGuests:25000,internationalGuestsMixed:true},
+        {company:"Visit Scotland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Skottland",website:"visitscotland.com",annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true},
+        {company:"Caledonian MacBrayne",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Skottland",website:"calmac.co.uk",annualRevenue:180000000,estimatedGuests:200000,internationalGuestsMixed:true},
+        {company:"Loch Ness by Jacobite",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Skottland",website:"jacobite.co.uk",annualRevenue:18000000,estimatedGuests:80000,internationalGuestsMixed:true},
+        {company:"Edinburgh Bus Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Skottland",website:"edinburghbustours.com",annualRevenue:32000000,estimatedGuests:250000,internationalGuestsMixed:true},
+        {company:"Historic Environment Scotland",segment:"Museum",nextSeasonStart:"heilars",country:"Skottland",website:"historicenvironment.scot",annualRevenue:150000000,estimatedGuests:1000000,internationalGuestsMixed:true},
+        {company:"VisitBritain",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"England",website:"visitbritain.com",annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true},
+        {company:"Stonehenge Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"England",website:"stonehengetours.com",annualRevenue:28000000,estimatedGuests:120000,internationalGuestsMixed:true},
+        {company:"City Sightseeing UK",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"England",website:"city-sightseeing.com",annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true},
+        {company:"Windermere Lake Cruises",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"England",website:"windermere-lakecruises.co.uk",annualRevenue:14000000,estimatedGuests:100000,internationalGuestsMixed:true},
+        {company:"Visit Wales",segment:"Destinasjonsselskap",nextSeasonStart:"sommer",country:"Wales",website:"visitwales.com",annualRevenue:80000000,estimatedGuests:400000,internationalGuestsMixed:true},
+        {company:"Mersey Ferries",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"England",website:"merseyferries.co.uk",annualRevenue:25000000,estimatedGuests:200000,internationalGuestsMixed:true},
+        {company:"P&O Ferries UK",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"England",website:"poferries.com",annualRevenue:900000000,estimatedGuests:8000000,internationalGuestsMixed:true},
+        {company:"Paris City Vision",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Île-de-France",website:"pariscityvision.com",annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true},
+        {company:"Bateaux Mouches",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Île-de-France",website:"bateaux-mouches.fr",annualRevenue:45000000,estimatedGuests:1200000,internationalGuestsMixed:true},
+        {company:"Normandy American Tours",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Normandie",website:"normandy-tours.com",annualRevenue:18000000,estimatedGuests:40000,internationalGuestsMixed:true},
+        {company:"Gray Line New York",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Mid-Atlantic",website:"graylinenewyork.com",annualRevenue:120000000,estimatedGuests:800000,internationalGuestsMixed:true},
+        {company:"Alcatraz City Cruises",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Pacific Coast",website:"alcatrazcruises.com",annualRevenue:85000000,estimatedGuests:1400000,internationalGuestsMixed:true},
+        {company:"Grand Canyon Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Mountain West",website:"grandcanyontours.com",annualRevenue:65000000,estimatedGuests:200000,internationalGuestsMixed:true},
+      ];
+      const GM={noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],uk:["uk","united kingdom","england","scotland","britain","wales","ireland"],skottland:["scotland","skottland"],england:["england"],"england-nord":["north england","yorkshire","manchester","liverpool"],"england-sør":["london","south england","southeast"],wales:["wales","cymru"],irland:["ireland","eire"],"nord-irland":["northern ireland"],frankrike:["france","frankrike"],"île-de-france":["paris","île-de-france","ile de france"],normandie:["normandie","normandy"],bretagne:["bretagne","brittany"],provence:["provence","côte d'azur","nice"],loiredalen:["loire"],alsace:["alsace"],tyskland:["germany","deutschland","tyskland"],bayern:["bavaria","bayern","münchen"],nederland:["nederland","netherlands","holland"],usa:["usa","united states","us"],"mid-atlantic":["new york","new jersey","pennsylvania","maryland"],"pacific coast":["california","oregon","washington state"],"mountain west":["colorado","utah","wyoming","montana","arizona"],"new england":["new england","maine","massachusetts"],"southeast usa":["florida","georgia","tennessee"],"midwest usa":["ohio","michigan","illinois"],spania:["spain","spania"],italia:["italy","italia"]};
+      if (!cfg?.geos?.length) return all;
       const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
-      const f=all.filter(c=>{const cc=(c.country||'').toLowerCase();return[...ok].some(a=>cc.includes(a));});
+      let f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
+      if(f.length===0) f=all;
+      if(cfg.months&&cfg.months!=="heilars"){const ws=f.filter(c=>c.nextSeasonStart==="heilars"||c.nextSeasonStart===cfg.months);if(ws.length>=3)f=ws;}
+      if(cfg.segs&&cfg.segs.length>0){const ws=f.filter(c=>cfg.segs.some(s=>(c.segment||"").toLowerCase().includes(s.toLowerCase())));if(ws.length>=3)f=ws;}
       return f.length>0?f:all;
     },
-    loadMemory: async function() { return {runs:[],companies:{},lastRun:null,totalLeads:0}; },
-    saveMemory: async function(m) { return; },
-    memoryHasCompany: function(m,l) { if(!m||!m.companies)return false; const k=(l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); return !!(k&&m.companies[k]); },
-    addToMemory: function(m,l,id,name) { const k=(l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); if(!k)return; m.companies[k]={company:l.company,website:l.website||'',agent:id,agentName:name,hubspotId:l.hubspotId||'',draftId:l.draftId||'',tier:l.tier||0,score:l.priorityScore||0,date:new Date().toISOString().split('T')[0]}; },
-    addRunToMemory: function(m,r) { if(!m.runs)m.runs=[]; m.runs.unshift(r); if(m.runs.length>90)m.runs=m.runs.slice(0,90); m.lastRun=r.date; m.totalLeads=(m.totalLeads||0)+(r.newLeads||0); },
-    makeCompanyKey: function(l) { return (l.website||l.company||'').toLowerCase().replace(/^www\./,'').replace(/[^a-z0-9]/g,''); },
+    
     version: "v9.4-bundled"
   };
 }

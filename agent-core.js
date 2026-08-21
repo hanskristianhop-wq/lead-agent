@@ -519,53 +519,138 @@ async function findAndEnrichLeads(cfg) {
 
 function buildApolloPrompt(cfg) { /* legacy */ return ""; }
 
-// ── GEO-AWARE DEMO LEADS (slim — websøk gir ekte data) ───
+// ── GEO-AWARE DEMO LEADS ───────────────────────────────────
 function getDemoLeads(cfg) {
-  // Minimal fallback — berre brukt om nettverket er nede
   const all = [
-    {company:"Havila Kystruten",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Noreg",website:"havila.no",annualRevenue:800000000,estimatedGuests:60000,internationalGuestsMixed:true},
-    {company:"Visit Tromsø",segment:"Destinasjonsselskap",nextSeasonStart:"vinter",country:"Noreg",website:"visittromso.no",annualRevenue:65000000,estimatedGuests:120000,internationalGuestsMixed:true},
-    {company:"Visit Scotland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Skottland",website:"visitscotland.com",annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true},
-    {company:"Rabbies Trail Burners",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Skottland",website:"rabbies.com",annualRevenue:45000000,estimatedGuests:25000,internationalGuestsMixed:true},
-    {company:"VisitBritain",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"England",website:"visitbritain.com",annualRevenue:500000000,estimatedGuests:2000000,internationalGuestsMixed:true},
-    {company:"Munich City Tours",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Bayern",website:"munichinformation.de",annualRevenue:18000000,estimatedGuests:150000,internationalGuestsMixed:true},
-    {company:"KD Rhine Cruise",segment:"Båt/cruise",nextSeasonStart:"sommer",country:"Rheinland",website:"k-d.com",annualRevenue:35000000,estimatedGuests:300000,internationalGuestsMixed:true},
-    {company:"Paris City Vision",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Île-de-France",website:"pariscityvision.com",annualRevenue:85000000,estimatedGuests:500000,internationalGuestsMixed:true},
-    {company:"Bateaux Mouches",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Île-de-France",website:"bateaux-mouches.fr",annualRevenue:45000000,estimatedGuests:1200000,internationalGuestsMixed:true},
-    {company:"Gray Line New York",segment:"Turoperatørar",nextSeasonStart:"heilars",country:"Mid-Atlantic",website:"graylinenewyork.com",annualRevenue:120000000,estimatedGuests:800000,internationalGuestsMixed:true},
-    {company:"Visit Copenhagen",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Danmark",website:"visitcopenhagen.com",annualRevenue:90000000,estimatedGuests:300000,internationalGuestsMixed:true},
-    {company:"Santa Claus Village",segment:"Turoperatørar",nextSeasonStart:"vinter",country:"Finland",website:"santaclausvillage.info",annualRevenue:60000000,estimatedGuests:50000,internationalGuestsMixed:true},
-    {company:"Alcatraz City Cruises",segment:"Båt/cruise",nextSeasonStart:"heilars",country:"Pacific Coast",website:"alcatrazcruises.com",annualRevenue:85000000,estimatedGuests:1400000,internationalGuestsMixed:true},
-    {company:"Tourism Ireland",segment:"Destinasjonsselskap",nextSeasonStart:"heilars",country:"Irland",website:"tourismireland.com",annualRevenue:150000000,estimatedGuests:500000,internationalGuestsMixed:true},
-    {company:"Neuschwanstein Tours",segment:"Turoperatørar",nextSeasonStart:"sommer",country:"Bayern",website:"neuschwanstein.de",annualRevenue:35000000,estimatedGuests:300000,internationalGuestsMixed:true},
+    // NOREG
+    {company:"Havila Kystruten",      segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Noreg",        website:"havila.no"},
+    {company:"Norsk Fjordcruise",     segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Noreg",        website:"fjordcruise.no"},
+    {company:"Visit Tromsø AS",       segment:"Destinasjonsselskap", nextSeasonStart:"vinter", country:"Noreg",        website:"visittromso.no"},
+    {company:"North Norway Tours",    segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Noreg",        website:"northnorwaytours.no"},
+    {company:"Kirkenes Snowhotel",    segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Noreg",        website:"snowhotel.no"},
+    {company:"Polarmuseet Tromsø",    segment:"Museum",              nextSeasonStart:"heilars",country:"Noreg",        website:"polarmuseet.no"},
+    // SVERIGE
+    {company:"Icehotel Jukkasjärvi",  segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Sverige",      website:"icehotel.com"},
+    {company:"Swedish Lapland",       segment:"Destinasjonsselskap", nextSeasonStart:"vinter", country:"Sverige",      website:"swedishlapland.com"},
+    // DANMARK
+    {company:"Visit Copenhagen",      segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Danmark",      website:"visitcopenhagen.com"},
+    {company:"DFDS Cruises",          segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Danmark",      website:"dfds.com"},
+    // FINLAND
+    {company:"Visit Rovaniemi",       segment:"Destinasjonsselskap", nextSeasonStart:"vinter", country:"Finland",      website:"visitrovaniemi.fi"},
+    {company:"Santa Claus Village",   segment:"Turoperatørar",       nextSeasonStart:"vinter", country:"Finland",      website:"santaclausvillage.info"},
+    // ISLAND
+    {company:"Visit Iceland",         segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Island",       website:"visitreykjavik.is"},
+    {company:"Arctic Adventures IS",  segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Island",       website:"adventures.is"},
+    // SKOTTLAND
+    {company:"Visit Scotland",        segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Skottland",    website:"visitscotland.com"},
+    {company:"Rabbies Trail Burners", segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Skottland",    website:"rabbies.com"},
+    {company:"Caledonian MacBrayne",  segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",    website:"calmac.co.uk"},
+    {company:"Loch Ness by Jacobite", segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Skottland",    website:"jacobite.co.uk"},
+    {company:"Edinburgh Bus Tours",   segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Skottland",    website:"edinburghbustours.com"},
+    {company:"Historic Environment Scotland",segment:"Museum",       nextSeasonStart:"heilars",country:"Skottland",    website:"historicenvironment.scot"},
+    {company:"Highlands Unbounded",   segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Skottland",    website:"highlandsunbounded.com"},
+    // ENGLAND
+    {company:"VisitBritain",          segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"England",      website:"visitbritain.com"},
+    {company:"Stonehenge Tours",      segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"England",      website:"stonehengetours.com"},
+    {company:"City Sightseeing UK",   segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"England",      website:"city-sightseeing.com"},
+    {company:"Mersey Ferries",        segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"England",      website:"merseyferries.co.uk"},
+    // WALES
+    {company:"Visit Wales",           segment:"Destinasjonsselskap", nextSeasonStart:"sommer", country:"Wales",        website:"visitwales.com"},
+    // IRLAND
+    {company:"Wild Rover Tours",      segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Irland",       website:"wildrovertours.com"},
+    {company:"Tourism Ireland",       segment:"Destinasjonsselskap", nextSeasonStart:"heilars",country:"Irland",       website:"tourismireland.com"},
+    // FRANKRIKE
+    {company:"Paris City Vision",     segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Île-de-France",website:"pariscityvision.com"},
+    {company:"Bateaux Mouches",       segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Île-de-France",website:"bateaux-mouches.fr"},
+    {company:"Chateau de Versailles", segment:"Museum",              nextSeasonStart:"heilars",country:"Île-de-France",website:"chateauversailles.fr"},
+    {company:"Normandy Tours",        segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Normandie",    website:"normandy-tours.com"},
+    {company:"Brittany Ferries",      segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Bretagne",     website:"brittany-ferries.fr"},
+    {company:"Riviera Tours Nice",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Provence",     website:"nicetourisme.com"},
+    // TYSKLAND — turoperatørar sommer
+    {company:"Munich Walks",          segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"munichwalks.com"},
+    {company:"Radius Tours Munich",   segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"radiustours.com"},
+    {company:"Neuschwanstein Tours",  segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"neuschwanstein.de"},
+    {company:"Romantic Road Coach",   segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"romanticroadcoach.de"},
+    {company:"München Stadtführungen",segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Bayern",       website:"muenchen-tour.de"},
+    {company:"Bayerische Seenschiff", segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Bayern",       website:"seenschifffahrt.de"},
+    {company:"KD Rhine Cruise",       segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Rheinland",    website:"k-d.com"},
+    {company:"Loreley Rhine Tours",   segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Rheinland",    website:"loreley-tourist.de"},
+    {company:"Cologne City Tours",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Rheinland",    website:"koeln-tourismus.de"},
+    {company:"Cologne Cathedral",     segment:"Museum",              nextSeasonStart:"heilars",country:"Rheinland",    website:"koelner-dom.de"},
+    {company:"Berlin Walks",          segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Berlin",       website:"berlinwalks.com"},
+    {company:"New Berlin Tours",      segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Berlin",       website:"newberlintours.com"},
+    {company:"Spree River Cruise",    segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Berlin",       website:"stern-und-kreis.de"},
+    {company:"Hamburg Hafen Tour",    segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nord-Tyskland",website:"hadag.de"},
+    {company:"Hamburg City Tours",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Nord-Tyskland",website:"hamburg-tourismus.de"},
+    {company:"Dresden City Tour",     segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Aust-Tyskland",website:"dresden.de"},
+    {company:"Heidelberg Tours",      segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Tyskland",     website:"heidelberg-marketing.de"},
+    {company:"Schwarzwald Tours",     segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Tyskland",     website:"schwarzwald-tourismus.info"},
+    {company:"Deutsche Bahn Sight",   segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Tyskland",     website:"bahn.de"},
+    // NEDERLAND
+    {company:"Rederij Lovers",        segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Nederland",    website:"lovers.nl"},
+    {company:"Keukenhof Gardens",     segment:"Museum",              nextSeasonStart:"sommer", country:"Nederland",    website:"keukenhof.nl"},
+    // USA
+    {company:"Gray Line New York",    segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Mid-Atlantic", website:"graylinenewyork.com"},
+    {company:"Alcatraz City Cruises", segment:"Båt/cruise",          nextSeasonStart:"heilars",country:"Pacific Coast",website:"alcatrazcruises.com"},
+    {company:"Grand Canyon Tours",    segment:"Turoperatørar",       nextSeasonStart:"sommer", country:"Mountain West",website:"grandcanyontours.com"},
+    // ITALIA
+    {company:"Colosseum Tours Rome",  segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Italia",       website:"colosseumtours.com"},
+    {company:"Venice Water Taxi",     segment:"Båt/cruise",          nextSeasonStart:"sommer", country:"Italia",       website:"veneziaunica.it"},
+    // SPANIA
+    {company:"Barcelona City Tours",  segment:"Turoperatørar",       nextSeasonStart:"heilars",country:"Spania",       website:"barcelonacitytours.com"},
   ];
+
   if (!cfg?.geos?.length) return all;
+
   const GM = {
-    noreg:["noreg","norge","norway"],sverige:["sverige","sweden"],danmark:["danmark","denmark"],finland:["finland"],island:["island","iceland"],
-    uk:["uk","england","scotland","britain","wales","ireland","skottland","irland"],
-    skottland:["skottland","scotland"],england:["england"],wales:["wales"],irland:["irland","ireland"],
+    noreg:["noreg","norge","norway"], sverige:["sverige","sweden"],
+    danmark:["danmark","denmark"], finland:["finland"],
+    island:["island","iceland"],
+    uk:["uk","united kingdom","england","scotland","britain","wales","ireland","skottland","irland","nord-irland"],
+    skottland:["skottland","scotland"], england:["england"],
+    "england-nord":["nord-england","north england","yorkshire","manchester"],
+    "england-sør":["sør-england","south england","london"],
+    wales:["wales","cymru"], irland:["irland","ireland"],
     "nord-irland":["nord-irland","northern ireland"],
-    frankrike:["frankrike","france","île-de-france","normandie","bretagne","provence","loiredalen","alsace"],
-    "île-de-france":["île-de-france","paris"],normandie:["normandie"],bretagne:["bretagne"],
-    provence:["provence"],loiredalen:["loiredalen","loire"],alsace:["alsace"],"alpane-fr":["alpane-fr","alps"],
+    frankrike:["frankrike","france","île-de-france","normandie","bretagne","provence","loiredalen","alsace","alpane-fr"],
+    "île-de-france":["île-de-france","paris"], normandie:["normandie","normandy"],
+    bretagne:["bretagne","brittany"], provence:["provence","côte d'azur"],
+    loiredalen:["loiredalen","loire"], alsace:["alsace"], "alpane-fr":["alpane-fr","alps","savoie"],
     tyskland:["tyskland","germany","deutschland","nord-tyskland","bayern","rheinland","aust-tyskland","berlin"],
-    bayern:["bayern","bavaria","münchen"],rheinland:["rheinland","rhine","köln"],
-    "nord-tyskland":["nord-tyskland","hamburg"],"aust-tyskland":["aust-tyskland","dresden"],berlin:["berlin"],
-    nederland:["nederland","netherlands"],belgia:["belgia","belgium"],sveits:["sveits","switzerland"],
-    austerrike:["austerrike","austria"],italia:["italia","italy"],spania:["spania","spain"],
+    bayern:["bayern","bavaria","münchen","munich"],
+    "nord-tyskland":["nord-tyskland","hamburg","bremen"],
+    rheinland:["rheinland","rhine","cologne","köln","düsseldorf"],
+    "aust-tyskland":["aust-tyskland","saxony","dresden","leipzig"], berlin:["berlin"],
+    nederland:["nederland","netherlands","holland"], belgia:["belgia","belgium"],
+    sveits:["sveits","switzerland"], austerrike:["austerrike","austria"],
+    italia:["italia","italy"], spania:["spania","spain"],
     usa:["usa","united states","mid-atlantic","pacific coast","mountain west","new england","southeast usa","midwest usa","texas gulf"],
-    "mid-atlantic":["mid-atlantic"],"pacific coast":["pacific coast"],"mountain west":["mountain west"],
-    "new england":["new england"],"southeast usa":["southeast usa"],"midwest usa":["midwest usa"],"texas gulf":["texas gulf"],
-    canada:["canada"],australia:["australia"],"new zealand":["new zealand"],japan:["japan"],
+    "mid-atlantic":["mid-atlantic"], "pacific coast":["pacific coast"],
+    "mountain west":["mountain west"], "new england":["new england"],
+    "southeast usa":["southeast usa"], "midwest usa":["midwest usa"], "texas gulf":["texas gulf"],
+    canada:["canada"], australia:["australia"], "new zealand":["new zealand"], japan:["japan"],
   };
+
+  // Geo filter
   const ok = new Set();
   cfg.geos.forEach(g => { (GM[g.toLowerCase()] || [g.toLowerCase()]).forEach(v => ok.add(v)); });
   let f = all.filter(c => [...ok].some(a => (c.country||"").toLowerCase().includes(a)));
-  if (f.length === 0) f = all;
+  if (f.length === 0) f = all; // fallback: show all if no geo match
+
+  // Season filter — heilars always included, strict match on vinter/sommer
   if (cfg.months && cfg.months !== "heilars") {
-    const ws = f.filter(c => c.nextSeasonStart === "heilars" || c.nextSeasonStart === cfg.months);
-    if (ws.length >= 3) f = ws;
+    const withSeason = f.filter(c => c.nextSeasonStart === "heilars" || c.nextSeasonStart === cfg.months);
+    if (withSeason.length >= 3) f = withSeason;
   }
+
+  // Segment filter
+  if (cfg.segs && cfg.segs.length > 0) {
+    const withSeg = f.filter(c => cfg.segs.some(s =>
+      (c.segment||"").toLowerCase().includes(s.toLowerCase().split("/")[0])
+    ));
+    if (withSeg.length >= 3) f = withSeg;
+  }
+
   return f;
 }
 
@@ -583,6 +668,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v11.2 — " + new Date().toISOString().split("T")[0]
+  version: "v11.3 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);

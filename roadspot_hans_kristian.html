@@ -149,7 +149,9 @@ textarea{min-height:80px;resize:vertical}
       <div class="spin"></div>
       <p style="font-size:14px;font-weight:500;margin-bottom:1rem" id="run-status">Startar…</p>
       <ul class="slist">
-        <li id="s-apollo">○ Web-søk: TripAdvisor · Viator · Google · Reddit → Apollo-berikking</li>
+        <li id="s-apollo">○ Steg 1: Breitt søk — GYG · Viator · TripAdvisor · Google (40-60 kandidatar)</li>
+        <li id="s-screen">○ Steg 2: Screening — kryss-ref · aktiv-sjekk · 2025/2026-reviews (→ topp 30)</li>
+        <li id="s-deep">○ Steg 3: Djup analyse — nøkkeltur · ekte sitatar · RoadSpot-case (→ 25 beste)</li>
         <li id="s-teamcheck">○ Teamsjekk — HubSpot + lokal cache</li>
         <li id="s-reviews">○ Review-søk — TripAdvisor · Google · Viator · GYG</li>
         <li id="s-score">○ Prioriteringsscore — reviews → sesong → geografi</li>
@@ -806,7 +808,7 @@ async function runAgent() {
   ["apollo","teamcheck","reviews","score","stepemail","hubspot","gmail"].forEach(s => stepUI(s, ""));
   logMsg("Køyring starta · " + cfg.name + " · " + new Date().toLocaleTimeString("no-NO"));
 
-  stepUI("apollo","active");
+  stepUI("apollo","active"); stepUI("s-screen",""); stepUI("s-deep","");
   document.getElementById("run-status").textContent = "Søkjer breitt etter selskap…"; prog(4);
   logMsg("Steg 1: Web-søk → TripAdvisor · Viator · Google · Reddit…");
   let raw = [];
@@ -821,7 +823,16 @@ async function runAgent() {
     logMsg("Web-søk feila — brukar demo-data", "warn");
     raw = RS.getDemoLeads(cfg);
   }
-  stepUI("apollo","done"); prog(14, raw.length + " selskap funne");
+  stepUI("apollo","done");
+  prog(5, "Steg 2: Screening og kryssreferanse...");
+  stepUI("s-screen","active");
+  await sl(100); // screening skjer inne i findAndEnrichLeads
+  stepUI("s-screen","done");
+  prog(10, "Steg 3: Djup analyse av topp 25...");
+  stepUI("s-deep","active");
+  await sl(100); // deep analyze skjer inne i findAndEnrichLeads  
+  stepUI("s-deep","done");
+  prog(14, raw.length + " selskap funne");
 
   stepUI("teamcheck","active"); document.getElementById("run-status").textContent = "Teamsjekk…"; prog(17);
   let skipCount = 0;

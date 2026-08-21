@@ -479,7 +479,7 @@ async function runSystemCheck() {
       body: JSON.stringify({
         model: "claude-sonnet-4-6", max_tokens: 200,
         tools: [{type: "web_search_20250305", name: "web_search"}],
-        messages: [{role: "user", content: "Search for RoadSpot.com and confirm it exists. Return: found=true or found=false: true, "description": "..."}"}]
+        messages: [{role: "user", content: "Search for RoadSpot.com tourism company. Confirm it exists": true, "description": "..."}"}]
       })
     });
     const d = await r.json();

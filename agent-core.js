@@ -394,8 +394,8 @@ function buildGeoMap() {
 function extractCompaniesFromText(txt, cfg, geoEn, segTerms) {
   // Fallback: extract company names from unstructured text
   const companies = [];
-  const lines = txt.split('
-');
+  const lines = txt.split('\n');
+
   for (const line of lines) {
     // Look for lines with company-like patterns
     const m = line.match(/^\d+[\.\)]\s+(.+?)(?:\s[-–]\s|$)/);

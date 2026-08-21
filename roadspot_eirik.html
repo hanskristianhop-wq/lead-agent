@@ -555,6 +555,7 @@ async function boot() {
     document.getElementById("boot-ver").textContent = "(lokal)";
   }
   loadCfg();
+  saveCfg(); // persist current UI state to localStorage
   renderTeam();
 
   // Last minne (localStorage)
@@ -609,7 +610,7 @@ function getCfg() {
     email:  s.email  || "",
     phone:  s.phone  || "",
     title:  s.title  || "Sales | RoadSpot",
-    months: s.months || 'vinter',
+    months: s.months || document.getElementById('cfg-months')?.value || 'vinter',
     rev1:   s.rev1   === "yes",
     sig:    s.sig    || "Med venleg helsing,\n\nEirik\nSales | RoadSpot\nMultilingual AI Audio Guiding for Professional Tourism\nroadspot.com",
     geos:   s.geos   || ["Noreg", "Sverige", "Danmark"],

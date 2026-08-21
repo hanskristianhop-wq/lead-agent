@@ -353,36 +353,46 @@ async function findViaApolloFallback(cfg) {
 }
 
 async function findAndEnrichLeads(cfg) {
-  // Steg 1: Web-søk
-  let companies = await findCompaniesViaWeb(cfg);
+  const KEY = c => (c.website||c.company||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  let companies = [];
+  const seen = new Set();
 
-  // Steg 2: Fyll opp til 25 via Apollo om web-søket gir for lite
-  if (companies.length < 25) {
-    const apolloResults = await findViaApolloFallback(cfg);
-    // Legg til Apollo-resultat som ikkje allereie er med
-    const existing = new Set(companies.map(c => (c.website||c.company||"").toLowerCase()));
-    for (const c of apolloResults) {
-      const key = (c.website||c.company||"").toLowerCase();
-      if (!existing.has(key)) { companies.push(c); existing.add(key); }
+  function addUnique(list) {
+    for (const c of list) {
+      const k = KEY(c);
+      if (k && !seen.has(k)) { seen.add(k); companies.push(c); }
       if (companies.length >= 25) break;
     }
   }
 
-  // Steg 3: Fyll opp med demo-data om framleis under 25
+  // Steg 1: Web-søk (Apollo-uavhengig)
+  try {
+    const webResults = await findCompaniesViaWeb(cfg);
+    if (webResults.length > 0) addUnique(webResults);
+  } catch(e) { console.warn("Web-søk feila:", e.message); }
+
+  // Steg 2: Apollo-fallback om web-søk gir for lite
   if (companies.length < 25) {
-    const demo = getDemoLeads(cfg);
-    const existing = new Set(companies.map(c => (c.website||c.company||"").toLowerCase()));
-    for (const c of demo) {
-      const key = (c.website||c.company||"").toLowerCase();
-      if (!existing.has(key)) { companies.push(c); existing.add(key); }
-      if (companies.length >= 25) break;
-    }
+    try {
+      const apolloResults = await findViaApolloFallback(cfg);
+      if (apolloResults.length > 0) addUnique(apolloResults);
+    } catch(e) { console.warn("Apollo-fallback feila:", e.message); }
   }
 
-  // Steg 4: Apollo-berikking (hent kontaktinfo for topp 15)
-  const needsEnrichment = companies.filter(c => !c.email || !c.contact);
-  if (needsEnrichment.length > 0) {
-    await enrichWithApollo(needsEnrichment.slice(0, 15));
+  // Steg 3: Demo-data som alltid fungerer (geo+sesong+segment-filtrert)
+  if (companies.length < 25) {
+    addUnique(getDemoLeads(cfg));
+  }
+
+  // Steg 4: Om framleis under 25 — bruk demo utan sesongfilter
+  if (companies.length < 10) {
+    addUnique(getDemoLeads({geos: cfg.geos, months: null, segs: cfg.segs}));
+  }
+
+  // Steg 5: Apollo-berikking (kontaktinfo for dei utan e-post)
+  const needsEnrich = companies.filter(c => !c.email || !c.contact).slice(0, 15);
+  if (needsEnrich.length > 0) {
+    await enrichWithApollo(needsEnrich);
   }
 
   return companies.slice(0, 25);
@@ -413,7 +423,7 @@ function getDemoLeads(cfg) {
     {company:"Visit Scotland",        segment:"Destinasjonsselskap",nextSeasonStart:"heilars", country:"UK",     website:"visitscotland.com",     annualRevenue:200000000,estimatedGuests:500000,internationalGuestsMixed:true, description:"Skottlands turistorganisasjon"},
     {company:"Caledonian MacBrayne",  segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"UK",     website:"calmac.co.uk",          annualRevenue:180000000,estimatedGuests:200000,internationalGuestsMixed:true, description:"Ferjeselskap Skottland"},
     {company:"National Trust Scotland",segment:"Museum",            nextSeasonStart:"heilars", country:"UK",     website:"nts.org.uk",            annualRevenue:95000000, estimatedGuests:300000,internationalGuestsMixed:true, description:"Historiske attraksjonar Skottland"},
-    {company:"Rederij Lovers",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Nederland",website:"lovers.nl",
+    {company:"Rederij Lovers",        segment:"Båt/cruise",         nextSeasonStart:"sommer",  country:"Nederland",website:"lovers.nl",           annualRevenue:35000000, estimatedGuests:800000,internationalGuestsMixed:true, description:"Kanalcruise Amsterdam"},
     // FRANKRIKE
     {company:"Paris City Vision",     segment:"Turoperatørar",      nextSeasonStart:"heilars", country:"Île-de-France", website:"pariscityvision.com",  annualRevenue:85000000, estimatedGuests:500000, internationalGuestsMixed:true, description:"Guidede turar Paris, 90%+ internasjonale turistar"},
     {company:"Bateaux Mouches",       segment:"Båt/cruise",         nextSeasonStart:"heilars", country:"Île-de-France", website:"bateaux-mouches.fr",   annualRevenue:45000000, estimatedGuests:1200000,internationalGuestsMixed:true, description:"Seinecruise Paris, ikonisk attraksjon"},
@@ -506,8 +516,28 @@ function getDemoLeads(cfg) {
     "new zealand":["new zealand","aotearoa"],
     japan:["japan","japanese"]
   };
+  // Geo-filter
   const ok=new Set(); cfg.geos.forEach(g=>{(GM[g.toLowerCase()]||[g.toLowerCase()]).forEach(v=>ok.add(v));});
-  const f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
+  let f=all.filter(c=>[...ok].some(a=>(c.country||"").toLowerCase().includes(a)));
+  if (f.length===0) f=all; // fallback: vis alt om ingen geo-match
+
+  // Sesong-filter: vis heilars alltid, vis vinter/sommer berre om dei matcher
+  if (cfg.months && cfg.months !== "heilars") {
+    const withSeason = f.filter(c =>
+      c.nextSeasonStart === "heilars" || c.nextSeasonStart === cfg.months
+    );
+    if (withSeason.length >= 5) f = withSeason;
+  }
+
+  // Segment-filter
+  if (cfg.segs && cfg.segs.length > 0) {
+    const withSeg = f.filter(c => cfg.segs.some(s =>
+      (c.segment||"").toLowerCase().includes(s.toLowerCase()) ||
+      s.toLowerCase().includes((c.segment||"").toLowerCase().split("/")[0])
+    ));
+    if (withSeg.length >= 3) f = withSeg;
+  }
+
   return f.length>0 ? f : all;
 }
 
@@ -524,6 +554,6 @@ window.RS = {
   findAndEnrichLeads, findCompaniesViaWeb, enrichWithApollo,
   getDemoLeads: cfg => getDemoLeads(cfg),
   apiCall,
-  version: "v10.3 — " + new Date().toISOString().split("T")[0]
+  version: "v10.4 — " + new Date().toISOString().split("T")[0]
 };
 console.log("RoadSpot Core:", window.RS.version);
